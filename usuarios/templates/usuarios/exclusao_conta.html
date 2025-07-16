@@ -1,0 +1,43 @@
+{% extends "filmes/lista_filmes.html" %} {% block title %}Confirmar Exclusão de Conta - Plume Project{% endblock %}
+
+{% block extrastyles %}
+{{ block.super }} {# Mantém estilos do base, se houver #}
+{% load static %}
+{# Certifique-se que o auth_styles.css está sendo carregado.
+Se seu base já carrega um CSS principal, e auth_styles complementa, ótimo.
+Caso contrário, adicione o link aqui se for específico para esta página.
+Se auth_styles já está no seu CSS global, não precisa linkar de novo.
+Assumindo que precisa ser linkado aqui para garantir: #}
+<link rel="stylesheet" href="{% static 'css/auth_styles.css' %}">
+{# Garanta que FontAwesome esteja disponível (geralmente carregado no base) #}
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="confirm-action-container">
+    <h1><i class="fas fa-exclamation-triangle"></i> Atenção: Exclusão de Conta</h1>
+    <p>Você está prestes a excluir permanentemente sua conta do Plume Project.</p>
+    <div class="aviso-importante">
+        <p style="margin-bottom: 0.5em;"><strong>Todas as suas informações serão perdidas, incluindo:</strong></p>
+        <ul style="text-align: left; margin-left: 20px; margin-bottom: 0; padding-left: 0; list-style: disc;">
+            <li>Seu perfil de usuário e avatar.</li>
+            <li>Suas listas de filmes personalizadas.</li>
+            <li>Seus filmes favoritos.</li>
+            <li>Qualquer outra configuração ou dado associado.</li>
+        </ul>
+        <p style="margin-top: 1em; font-weight: bold;">Esta ação não poderá ser desfeita.</p>
+    </div>
+    <p>Por favor, confirme que você deseja prosseguir com a exclusão.</p>
+
+    <form method="post" action="{% url 'usuarios:excluir_conta' %}">
+        {% csrf_token %}
+        <div class="botoes-confirmacao">
+            <button type="submit" class="botao-confirmacao botao-confirmar--perigo">
+                <i class="fas fa-trash-alt" style="margin-right: 8px;"></i> Sim, Excluir Tudo
+            </button>
+            <a href="{% url 'usuarios:perfil_usuario' %}" class="botao-confirmacao botao-cancelar--confirmacao">
+                <i class="fas fa-times" style="margin-right: 8px;"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

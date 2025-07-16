@@ -1,0 +1,44 @@
+{% extends "filmes/lista_filmes.html" %}
+{% load static %}
+
+{% block title %}Plume Project - Cadastro{% endblock %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="{% static 'css/auth_styles.css' %}">
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="container auth-container">
+    <h2>Criar Nova Conta</h2>
+    <form method="post" novalidate class="auth-form"> {# novalidate para ver os erros do Django #}
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="form-errors non-field-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }} {# Renderiza o widget do campo #}
+                
+                {# Exibe erros específicos do campo ABAIXO do input #}
+                {% for error in field.errors %}
+                    <div class="error-message">{{ error }}</div>
+                {% endfor %}
+
+                {# Exibe o help_text ABAIXO do input e dos erros de campo #}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text|safe }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="auth-button">Cadastrar</button>
+    </form>
+    <p class="auth-redirect-link">Já tem uma conta? <a href="{% url 'usuarios:login' %}">Faça login aqui</a>.</p>
+</div>
+{% endblock %}

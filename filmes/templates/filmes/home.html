@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>plume Project</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> </head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}" class="{% if pagina_atual == 'home' %}active{% endif %}">Populares</a></li>
+                <li><a href="{% url 'filmes_lancamentos' %}" class="{% if pagina_atual == 'lancamentos' %}active{% endif %}">Lançamentos</a></li>
+                </ul>
+        </nav>
+        <h1>Plume</h1>
+    </header>
+    <div class="container">
+        <h1>Populares</h1>
+        <div class="filme-lista">
+            {% for filme in filmes_populares %}
+                <div class="filme-item">
+                    <img src="{{ base_poster_url }}{{ filme.poster_path }}" alt="{{ filme.title }}">
+                    <div class="avaliacao-container">  <i class="fas fa-star"></i>  {% if filme.vote_average == 0 %}
+                            <span>NA</span>  {% else %}
+                            <span>{{ filme.vote_average|floatformat:1 }}</span>  {% endif %}
+                    </div>
+                    <p class="filme-titulo">{{ filme.title }}</p>
+                    <div class="botao-container">
+                        <button class="botao">Favoritos</button>
+                        <button class="botao">Lista +</button>
+                    </div>
+                </div>
+            {% empty %}
+                <p>Nenhum filme popular encontrado.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2024 Plume Project. Eddie Allen de Medeiros Pinto.</p>
+    </footer>
+</body>
+</html>

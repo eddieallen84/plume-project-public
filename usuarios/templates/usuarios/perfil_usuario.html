@@ -1,0 +1,336 @@
+{% extends "filmes/lista_filmes.html" %}
+{% load static %}
+
+{% block title %}Perfil de {{ perfil_modelo.get_nome_completo|default:usuario_perfil.username }} - Plume Project{% endblock %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="{% static 'css/perfil_styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="container perfil-pagina-container">
+
+    <section class="perfil-info-principal">
+        <div class="perfil-avatar-coluna">
+            <img src="{{ perfil_modelo.get_avatar_url }}" alt="Avatar de {{ perfil_modelo.get_nome_completo|default:usuario_perfil.username }}" class="perfil-avatar-img-x" id="avatarDisplay">
+            <label for="avatarUploadInput" class="botao-acao-perfil botao-mudar-avatar-label">
+                <i class="fas fa-camera"></i> Mudar Foto
+            </label>
+            <input type="file" id="avatarUploadInput" accept="image/png, image/jpeg, image/gif" style="display: none;">
+            <button id="removeAvatarButton" 
+                    class="botao-acao-perfil botao-remover-foto {% if not perfil_modelo.avatar.name %}hidden{% endif %}" 
+                    title="Remover foto e usar avatar padrão">
+                <i class="fas fa-trash-alt"></i> Remover
+            </button>
+        </div>
+        <div class="perfil-detalhes-coluna">
+            <h1 class="perfil-nome-completo">{{ perfil_modelo.get_nome_completo }}</h1>
+            <p class="perfil-username">@{{ usuario_perfil.username }}</p>
+            <div class="perfil-meta-info">
+                {% if perfil_modelo.cidade %}<span class="meta-item"><i class="fas fa-map-marker-alt"></i> {{ perfil_modelo.cidade }}</span>{% endif %}
+                {% if perfil_modelo.data_nascimento %}<span class="meta-item"><i class="fas fa-birthday-cake"></i> {{ perfil_modelo.data_nascimento|date:"d/m/Y" }}</span>{% endif %}
+                <span class="meta-item"><i class="fas fa-calendar-alt"></i> No Plume desde {{ usuario_perfil.date_joined|date:"F \d\e Y" }}</span>
+            </div>
+            {% if perfil_modelo.biografia %}<p class="perfil-biografia-display">{{ perfil_modelo.biografia|linebreaksbr }}</p>
+            {% else %}<p class="perfil-biografia-display"><i>Nenhuma biografia adicionada.</i></p>{% endif %}
+        </div>
+    </section>
+
+    <nav class="perfil-nav-tabs">
+        <ul>
+            <li><a href="#" class="nav-link active" data-tab="tab-overview"><i class="fas fa-star"></i> Visão Geral</a></li>
+            <li><a href="#" class="nav-link" data-tab="tab-lists"><i class="fas fa-list-alt"></i> Minhas Listas</a></li>
+            <li><a href="#" class="nav-link" data-tab="tab-edit"><i class="fas fa-user-edit"></i> Editar Perfil</a></li>
+            <li><a href="#" class="nav-link" data-tab="tab-account"><i class="fas fa-user-cog"></i> Conta</a></li>
+        </ul>
+    </nav>
+
+    <div class="perfil-tab-content">
+
+        <div id="tab-overview" class="tab-pane active">
+            <h2 class="detalhe-secao-titulo">Meus Favoritos</h2>
+            <div class="filme-lista perfil-filme-lista" id="lista-favoritos-container">
+                {% for filme_obj in favoritos_padrao.filmes.all %}
+                    <div class="filme-item-wrapper-perfil" data-filme-card-idtmdb="{{ filme_obj.id_tmdb }}">
+                        <a href="{% url 'detalhe_filme' filme_id=filme_obj.id_tmdb %}" class="filme-link-wrapper">
+                            <div class="filme-item filme-item-perfil">
+                                {% if filme_obj.poster_path %}
+                                    <img src="{{ base_poster_url }}{{ filme_obj.poster_path }}" alt="Pôster de {{ filme_obj.titulo }}">
+                                {% else %}
+                                    <img class="imagem-placeholder" src="{% static 'img/placeholder_poster.png' %}" alt="Pôster indisponível">
+                                {% endif %}
+                                <div class="titulo-wrapper"><p class="filme-titulo">{{ filme_obj.titulo }}</p></div>
+                            </div>
+                        </a>
+                        <button class="botao botao-remover-favorito-perfil" data-id-tmdb="{{ filme_obj.id_tmdb }}" title="Remover dos Favoritos">
+                            <i class="fas fa-trash-alt"></i> REMOVER
+                        </button>
+                    </div>
+                {% empty %}
+                    <div class="lista-vazia-wrapper">
+                        <p class="lista-vazia-mensagem">Você ainda não adicionou nenhum filme aos seus favoritos.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="tab-lists" class="tab-pane">
+            <div class="secao-listas-header">
+                <h2 class="detalhe-secao-titulo">Minhas Listas Personalizadas</h2>
+                <button id="abrirModalCriarLista" class="botao-add-geral" title="Criar Nova Lista">+</button>
+            </div>
+            <div class="listas-personalizadas-container">
+                {% for lista_p in listas_personalizadas %}
+                    <div class="lista-personalizada-card" id="lista-personalizada-{{ lista_p.id }}">
+                        <div class="lista-card-header">
+                            <a href="{% url 'usuarios:detalhe_lista' lista_id=lista_p.id %}" class="lista-card-titulo">{{ lista_p.nome }}</a>
+                            <div class="lista-card-acoes">
+                                <span class="lista-card-contador">{{ lista_p.filmes.count }} filme(s)</span>
+                                <button class="botao-excluir-lista" data-list-id="{{ lista_p.id }}" data-list-name="{{ lista_p.nome|escapejs }}" title="Excluir a lista">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="lista-poster-preview">
+                            {% for filme_lp in lista_p.filmes.all|slice:":5" %}
+                                <div class="preview-poster">
+                                    {% if filme_lp.poster_path %}
+                                        <img src="{{ base_poster_url }}{{ filme_lp.poster_path }}" alt="{{ filme_lp.titulo }}">
+                                    {% else %}
+                                        <img class="imagem-placeholder" src="{% static 'img/placeholder_poster.png' %}" alt="Pôster indisponível">
+                                    {% endif %}
+                                </div>
+                            {% empty %}
+                                <p class="preview-vazia">Esta lista está vazia.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="lista-vazia-mensagem">Você ainda não criou nenhuma lista personalizada.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="tab-edit" class="tab-pane">
+            <h2 class="detalhe-secao-titulo">Editar Informações do Perfil</h2>
+            <div class="form-editar-perfil-wrapper">
+                {% if perfil_form %}
+                <form method="post" action="{% url 'usuarios:perfil_usuario' %}" class="form-editar-perfil-info">
+                    {% csrf_token %}
+                    <div class="form-group-perfil">
+                        <label for="{{ perfil_form.biografia.id_for_label }}">{{ perfil_form.biografia.label }}:</label>
+                        {{ perfil_form.biografia }}
+                    </div>
+                    <div class="form-group-perfil">
+                        <label for="{{ perfil_form.cidade.id_for_label }}">{{ perfil_form.cidade.label }}:</label>
+                        {{ perfil_form.cidade }}
+                    </div>
+                    <div class="form-group-perfil">
+                        <label for="{{ perfil_form.data_nascimento.id_for_label }}">{{ perfil_form.data_nascimento.label }}:</label>
+                        {{ perfil_form.data_nascimento }}
+                    </div>
+                    <button type="submit" name="atualizar_perfil_info" class="botao-submit-perfil">Salvar Informações</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="tab-account" class="tab-pane">
+            <h2 class="detalhe-secao-titulo">Gerenciamento da Conta</h2>
+            <div class="container-acao-perigo">
+                <h3>Excluir Sua Conta</h3>
+                <p>Ao prosseguir, sua conta e todos os dados associados (perfil, listas, etc.) serão permanentemente removidos. <strong>Esta ação é irreversível.</strong></p>
+                <div class="botao-container-direita">
+                    <a href="{% url 'usuarios:excluir_conta' %}" class="botao-acao-perfil botao-acao-perfil--perigo">
+                        <i class="fas fa-trash-alt"></i> Excluir Minha Conta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="cropModal" class="crop-modal">
+    <div class="custom-modal-content">
+        <h3>Recortar Imagem</h3>
+        <div id="imageToCropInModalContainer"><img id="imageToCropInModal" src="#"></div>
+        <div class="crop-modal-buttons">
+            <button id="confirmCropButton" class="botao-submit-perfil">Cortar e Salvar</button>
+            <button id="cancelCropButton" class="botao-cancelar-crop">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalCriarLista" class="custom-modal-plume">
+    <div class="custom-modal-content">
+        <button class="custom-modal-close-btn">&times;</button>
+        <h3>Criar Nova Lista</h3>
+        <form method="POST" action="{% url 'usuarios:perfil_usuario' %}" class="form-criar-lista">
+            {% csrf_token %}
+            <div class="form-group-inline">
+                <input type="text" name="nome_nova_lista" placeholder="Nome da nova lista" required class="input-nome-lista" maxlength="100">
+                <button type="submit" name="criar_lista" class="botao-submit-lista">Criar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    {{ avatar_default_url|json_script:"avatar-default-url-data" }} 
+    <script id="js-urls-perfil-data" type="application/json">
+        {
+            "toggleFavoritoUrl": "{% url 'toggle_favorito' %}",
+            "ajaxUploadAvatarUrl": "{% url 'usuarios:ajax_upload_avatar' %}",
+            "ajaxRemoverAvatarUrl": "{% url 'usuarios:ajax_remover_avatar' %}",
+            "ajaxDeleteListUrl": "{% url 'usuarios:ajax_delete_list' %}"
+        }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const JS_URLS_PERFIL = JSON.parse(document.getElementById('js-urls-perfil-data').textContent);
+        const csrftoken = getCookie('csrftoken');
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // --- LÓGICA DAS ABAS ---
+        const tabLinks = document.querySelectorAll('.perfil-nav-tabs .nav-link');
+        const tabPanes = document.querySelectorAll('.perfil-tab-content .tab-pane');
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                tabLinks.forEach(l => l.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+            });
+        });
+
+        // --- LÓGICA DO AVATAR E CROPPER.JS ---
+        const avatarUploadInput = document.getElementById('avatarUploadInput');
+        const avatarDisplayImage = document.getElementById('avatarDisplay');
+        const imageToCropElement = document.getElementById('imageToCropInModal');
+        const cropModalElement = document.getElementById('cropModal');
+        const confirmCropButton = document.getElementById('confirmCropButton');
+        const cancelCropButton = document.getElementById('cancelCropButton');
+        const removeAvatarButton = document.getElementById('removeAvatarButton');
+        let cropperInstance = null;
+
+        if(avatarUploadInput) {
+            avatarUploadInput.addEventListener('change', function(event) {
+                if (event.target.files && event.target.files[0]) {
+                    imageToCropElement.src = URL.createObjectURL(event.target.files[0]);
+                    cropModalElement.style.display = 'flex';
+                    if (cropperInstance) cropperInstance.destroy();
+                    cropperInstance = new Cropper(imageToCropElement, { aspectRatio: 1, viewMode: 1 });
+                }
+            });
+        }
+        if(cancelCropButton) cancelCropButton.addEventListener('click', () => cropModalElement.style.display = 'none');
+        if(confirmCropButton) {
+            confirmCropButton.addEventListener('click', function() {
+                if (!cropperInstance) return;
+                cropperInstance.getCroppedCanvas({ width: 300, height: 300 }).toBlob(function(blob) {
+                    const formData = new FormData();
+                    formData.append('avatar', blob, 'avatar.png');
+                    fetch(JS_URLS_PERFIL.ajaxUploadAvatarUrl, { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            avatarDisplayImage.src = data.avatar_url + '?t=' + new Date().getTime();
+                            if(removeAvatarButton) removeAvatarButton.classList.remove('hidden');
+                        } else { alert(data.message || 'Erro no upload.'); }
+                    }).finally(() => cropModalElement.style.display = 'none');
+                });
+            });
+        }
+        if (removeAvatarButton) {
+            removeAvatarButton.addEventListener('click', function() {
+                if (confirm("Remover sua foto de perfil?")) {
+                    fetch(JS_URLS_PERFIL.ajaxRemoverAvatarUrl, { method: 'POST', headers: { 'X-CSRFToken': csrftoken }})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            avatarDisplayImage.src = data.avatar_url;
+                            this.classList.add('hidden');
+                        } else { alert(data.message || 'Erro ao remover.'); }
+                    });
+                }
+            });
+        }
+        
+        // --- LÓGICA PARA REMOVER FILMES E LISTAS ---
+        document.querySelector('.perfil-tab-content').addEventListener('click', function(event) {
+            const botaoRemoverFavorito = event.target.closest('.botao-remover-favorito-perfil');
+            const botaoExcluirLista = event.target.closest('.botao-excluir-lista');
+
+            if (botaoRemoverFavorito) {
+                event.preventDefault();
+                const filmeIdTmdb = botaoRemoverFavorito.dataset.idTmdb;
+                fetch(JS_URLS_PERFIL.toggleFavoritoUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ id_tmdb: filmeIdTmdb })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok' && !data.is_favorito) {
+                        botaoRemoverFavorito.closest('.filme-item-wrapper-perfil').remove();
+                    }
+                });
+            }
+
+            if (botaoExcluirLista) {
+                event.preventDefault();
+                const listId = botaoExcluirLista.dataset.listId;
+                const listName = botaoExcluirLista.dataset.listName;
+                if (confirm(`Tem certeza que deseja excluir a lista "${listName}"?`)) {
+                    fetch(JS_URLS_PERFIL.ajaxDeleteListUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                        body: JSON.stringify({ id_lista: listId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            document.getElementById(`lista-personalizada-${listId}`).remove();
+                        } else { alert(data.message || "Não foi possível excluir."); }
+                    });
+                }
+            }
+        });
+        
+        // --- LÓGICA PARA O MODAL DE CRIAR LISTA ---
+        const botaoAbrirModal = document.getElementById('abrirModalCriarLista');
+        const modalCriarLista = document.getElementById('modalCriarLista');
+        if (botaoAbrirModal && modalCriarLista) {
+            const botaoFechar = modalCriarLista.querySelector('.custom-modal-close-btn');
+            botaoAbrirModal.addEventListener('click', () => modalCriarLista.style.display = 'flex');
+            botaoFechar.addEventListener('click', () => modalCriarLista.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target == modalCriarLista) modalCriarLista.style.display = 'none';
+            });
+        }
+    });
+    </script>
+{% endblock scripts %}

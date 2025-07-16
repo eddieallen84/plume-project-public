@@ -1,0 +1,108 @@
+{% extends "filmes/lista_filmes.html" %}
+{% load static %}
+
+{% block title %}{{ lista.nome }} - Minhas Listas{% endblock %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="{% static 'css/perfil_styles.css' %}">
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="container">
+    {% csrf_token %}
+    <h1 class="section-title"><i class="fas fa-list-alt icone-lista-titulo"></i> {{ lista.nome }}</h1>
+
+    <div class="filme-lista perfil-filme-lista" id="lista-detalhe-container">
+        {% for filme_obj in filmes_na_lista %}
+            <div class="filme-item-wrapper-perfil" data-filme-card-idtmdb="{{ filme_obj.id_tmdb }}">
+                <a href="{% url 'detalhe_filme' filme_id=filme_obj.id_tmdb %}" class="filme-link-wrapper">
+                    <div class="filme-item filme-item-perfil">
+                        {% if filme_obj.poster_path %}
+                            <img src="{{ base_poster_url }}{{ filme_obj.poster_path }}" alt="Pôster de {{ filme_obj.titulo }}">
+                        {% else %}
+                            <img class="imagem-placeholder" src="{% static 'img/placeholder_poster.png' %}" alt="Pôster indisponível">
+                        {% endif %}
+                        <div class="titulo-wrapper"><p class="filme-titulo">{{ filme_obj.titulo }}</p></div>
+                    </div>
+                </a>
+                <button class="botao botao-remover-favorito-perfil" 
+                        data-list-id="{{ lista.id }}" 
+                        data-id-tmdb="{{ filme_obj.id_tmdb }}"
+                        title="Remover '{{ filme_obj.titulo }}' desta lista">
+                    <i class="fas fa-trash-alt"></i> REMOVER
+                </button>
+            </div>
+        {% empty %}
+            <div class="lista-vazia-wrapper" style="width: 100%;">
+                <p class="lista-vazia-mensagem">Esta lista ainda está vazia.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {# REMOVIDO block.super PARA GARANTIR TOTAL ISOLAMENTO DESTE SCRIPT #}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const botoesRemover = document.querySelectorAll('.botao-remover-favorito-perfil');
+        const containerLista = document.getElementById('lista-detalhe-container');
+
+        botoesRemover.forEach(botao => {
+            botao.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                const listId = this.dataset.listId;
+                const filmeId = this.dataset.idTmdb;
+                
+                if (!listId || !filmeId) {
+                    alert('Erro: IDs não encontrados no botão.');
+                    return;
+                }
+
+                if (confirm("Tem certeza que deseja remover este filme da lista?")) {
+                    // URL está diretamente no código para evitar qualquer erro de variável
+                    fetch('/ajax/remove-from-list/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({ id_lista: listId, id_tmdb: filmeId })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                           // Tenta extrair a mensagem de erro do JSON, se houver
+                           return response.json().then(err => { 
+                               throw new Error(err.message || `Erro ${response.status} do servidor.`); 
+                           });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            // Encontra o elemento pai do card e o remove
+                            this.closest('.filme-item-wrapper-perfil').remove();
+                            // Se a lista ficar vazia, exibe a mensagem
+                            if (containerLista.querySelectorAll('.filme-item-wrapper-perfil').length === 0) {
+                                const p = document.createElement('p');
+                                p.className = 'lista-vazia-mensagem';
+                                p.textContent = 'Esta lista ficou vazia.';
+                                containerLista.appendChild(p);
+                            }
+                        } else {
+                            // Mostra a mensagem de erro vinda do servidor
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Falha na requisição:', error);
+                        alert('Ocorreu um erro: ' + error.message);
+                    });
+                }
+            });
+        });
+    });
+    </script>
+{% endblock %}

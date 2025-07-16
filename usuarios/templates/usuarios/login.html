@@ -1,0 +1,45 @@
+{% extends "filmes/lista_filmes.html" %}
+{% load static %}
+
+{% block title %}Plume Project - Login{% endblock %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="{% static 'css/auth_styles.css' %}">
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="container auth-container">
+    <h2>Login</h2>
+    <form method="post" action="{% url 'usuarios:login' %}" novalidate class="auth-form">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="form-errors non-field-errors">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <div class="error-message">{{ error }}</div>
+                {% endfor %}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text|safe }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-link" style="text-align: right; font-size: 0.9em; margin-top: -10px; margin-bottom: 20px;">
+            <a href="{% url 'usuarios:password_reset' %}">Esqueceu a senha?</a>
+        </div>
+        
+        <button type="submit" class="auth-button">Entrar</button>
+    </form>
+    <p class="auth-redirect-link">Não tem uma conta? <a href="{% url 'usuarios:cadastro' %}">Cadastre-se aqui</a>.</p>
+</div>
+{% endblock %}

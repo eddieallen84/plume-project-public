@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "core/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "zeroConfig": false,
+        "buildCommand": "rm -rf staticfiles && python manage.py collectstatic --noinput"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "core/wsgi.py"
+    }
+  ],
+  "installCommand": "pip install -r requirements.txt"
+}

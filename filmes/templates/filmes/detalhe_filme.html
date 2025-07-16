@@ -1,0 +1,278 @@
+{% extends "filmes/lista_filmes.html" %}
+{% load static %}
+
+{% block title %}{{ filme.title|default:"Detalhes do Filme" }}{% endblock %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="{% static 'css/detalhe_filme.css' %}">
+{% endblock extrastyles %}
+
+{% block content %}
+<div class="detalhe-filme-wrapper">
+    {% if filme.backdrop_path %}
+        <div class="backdrop-imagem" style="background-image: linear-gradient(to bottom, rgba(12, 36, 10, 0.6) 0%, rgba(12, 36, 10, 1) 90%), url('{{ base_backdrop_url }}{{ filme.backdrop_path }}');">
+        </div>
+    {% else %}
+        <div class="backdrop-imagem backdrop-imagem-padrao"></div>
+    {% endif %}
+
+    <div class="container detalhe-filme-container">
+        <div class="detalhe-principal">
+            <div class="detalhe-poster">
+                {% if filme.poster_path %}
+                    <img src="{{ base_poster_url_grande }}{{ filme.poster_path }}" alt="Pôster de {{ filme.title }}">
+                {% else %}
+                    {# --- Lógica de Pôster Padrão Unificada --- #}
+                    <img src="{% static 'img/placeholder_poster.png' %}" alt="Pôster não disponível" class="placeholder-poster-detalhe">
+                {% endif %}
+            </div>
+            <div class="detalhe-info">
+                <h1>
+                    {{ filme.title }}
+                    {% if release_year %}
+                        <span class="ano-lancamento">({{ release_year }})</span>
+                    {% endif %}
+                </h1>
+
+                {% if filme.original_title and filme.original_title != filme.title %}<p class="titulo-original"><em>{{ filme.original_title }}</em></p>{% endif %}
+                {% if filme.tagline and filme.tagline != '0' %}<p class="tagline">"{{ filme.tagline }}"</p>{% endif %}
+                
+                <div class="info-meta">
+                    {% if classificacao_br != "N/D" %}
+                        <span class="meta-classificacao">{{ classificacao_br }}</span>
+                    {% endif %}
+
+                    {% if formatted_release_date %}
+                        <span>{{ formatted_release_date }} (BR)</span>
+                    {% endif %}
+                    
+                    {% if filme.genres %}
+                        <span>• 
+                            {% for genero in filme.genres %}
+                                {{ genero.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
+                    {% endif %}
+
+                    {% if formatted_runtime %}
+                        <span>• {{ formatted_runtime }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="info-avaliacao">
+                    <strong>Avaliação TMDB:</strong> <i class="fas fa-star"></i> {{ filme.vote_average|floatformat:1 }} <span class="vote-count">({{ filme.vote_count }} votos)</span>
+                </div>
+
+                <div class="botoes-acao-detalhe">
+                    <button class="botao botao-favorito {% if is_favorito_atual %}favoritado{% endif %}" data-id-tmdb="{{ filme.id }}"
+                        data-titulo="{{ filme.title }}" data-poster="{{ filme.poster_path|default:'' }}"
+                        title="Adicionar/Remover dos Favoritos">
+                        <i class="{% if is_favorito_atual %}fas{% else %}far{% endif %} fa-heart"></i> 
+                        <span class="texto-botao">{% if is_favorito_atual %}Favorito!{% else %}Favoritos{% endif %}</span>
+                    </button>
+                    <button class="botao botao-add-lista" data-id-tmdb="{{ filme.id }}"
+                        data-titulo="{{ filme.title }}" data-poster="{{ filme.poster_path|default:'' }}"
+                        title="Adicionar a uma lista personalizada">
+                        <i class="fas fa-plus"></i> <span>Lista +</span>
+                    </button>
+                </div>
+
+                <h3 class="detalhe-subtitulo">Sinopse</h3>
+                <p class="sinopse-texto">{{ filme.overview|linebreaksbr|default:"Sinopse não disponível." }}</p>
+                {% if diretores %}<h3 class="detalhe-subtitulo">Direção</h3><p>{{ diretores|join:", " }}</p>{% endif %}
+                
+                <div class="links-externos-detalhe">
+                    {% if filme.homepage %}<a href="{{ filme.homepage }}" target="_blank" rel="noopener noreferrer" class="botao-link-externo">Página Oficial <i class="fas fa-external-link-alt"></i></a>{% endif %}
+                    {% if filme.imdb_id %}<a href="https://www.imdb.com/title/{{ filme.imdb_id }}/" target="_blank" rel="noopener noreferrer" class="botao-link-externo">Ver no IMDb <i class="fab fa-imdb"></i></a>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if trailer_youtube_key %}
+<div class="detalhe-trailer secao-detalhes">
+    <h2 class="detalhe-secao-titulo">Trailer</h2>
+    <div class="video-responsive">
+        <iframe src="https://www.youtube.com/embed/{{ trailer_youtube_key }}" title="YouTube video player para {{ filme.title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+</div>
+{% endif %}
+
+        {% if elenco_principal %}
+        <div class="detalhe-elenco secao-detalhes">
+            <h2 class="detalhe-secao-titulo">Elenco Principal</h2>
+            <div class="elenco-grid">
+                {% for ator in elenco_principal %}
+                    <div class="ator-card">
+                        <div class="ator-imagem-wrapper">
+                        {% if ator.profile_path %}<img src="{{ base_profile_url }}{{ ator.profile_path }}" alt="{{ ator.name }}">
+                        {% else %}<div class="sem-foto-ator"><i class="fas fa-user fa-2x"></i></div>{% endif %}
+                        </div>
+                        <p class="ator-nome">{{ ator.name }}</p>
+                        <p class="ator-personagem">{{ ator.character }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if filme.images and filme.images.backdrops|length > 1 %}
+        <div class="detalhe-imagens secao-detalhes">
+            <h2 class="detalhe-secao-titulo">Galeria de Imagens</h2>
+            <div class="imagens-grid">
+                {% for imagem in filme.images.backdrops|slice:":6" %}
+                    <a href="{{ base_backdrop_url }}{{ imagem.file_path }}" target="_blank" rel="noopener noreferrer" class="imagem-galeria-link">
+                        <img src="https://image.tmdb.org/t/p/w500{{ imagem.file_path }}" alt="Imagem do filme {{ filme.title }}">
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="addToListModal" class="custom-modal-plume" style="display: none;">
+    <div class="custom-modal-content">
+        <button class="custom-modal-close-btn">×</button>
+        <h3 id="modalListName">Adicionar a qual lista?</h3>
+        <div id="modalListOptions" class="custom-modal-options">
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+    {{ block.super }}
+    {{ user.is_authenticated|json_script:"usuario-autenticado-data" }}
+    {{ listas_personalizadas_usuario|json_script:"listas-personalizadas-data" }}
+    <script id="js-urls-data" type="application/json">
+        {
+            "login": "{% url 'usuarios:login' %}",
+            "toggleFavorito": "{% url 'toggle_favorito' %}",
+            "addToList": "{% url 'add_to_list' %}"
+        }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const USUARIO_AUTENTICADO = JSON.parse(document.getElementById('usuario-autenticado-data').textContent);
+        const LISTAS_PERSONALIZADAS = JSON.parse(document.getElementById('listas-personalizadas-data').textContent);
+        const JS_URLS = JSON.parse(document.getElementById('js-urls-data').textContent);
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        const botaoFavorito = document.querySelector('.botao-favorito');
+        if (botaoFavorito) {
+            botaoFavorito.addEventListener('click', function (event) {
+                event.preventDefault();
+                if (!USUARIO_AUTENTICADO) {
+                    window.location.href = JS_URLS.login;
+                    return;
+                }
+                const filmeIdTmdb = this.dataset.idTmdb;
+                const filmeTitulo = this.dataset.titulo;
+                const filmePosterPath = this.dataset.poster;
+                const icone = this.querySelector('i');
+                const spanTexto = this.querySelector('.texto-botao');
+
+                fetch(JS_URLS.toggleFavorito, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ id_tmdb: filmeIdTmdb, titulo: filmeTitulo, poster_path: filmePosterPath })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        this.classList.toggle('favoritado');
+                        if (data.is_favorito) {
+                            icone.classList.remove('far');
+                            icone.classList.add('fas');
+                            if(spanTexto) spanTexto.textContent = 'Favorito!';
+                        } else {
+                            icone.classList.remove('fas');
+                            icone.classList.add('far');
+                            if(spanTexto) spanTexto.textContent = 'Favoritos';
+                        }
+                    } else {
+                        alert(data.message || 'Ocorreu um erro.');
+                    }
+                });
+            });
+        }
+
+        const modal = document.getElementById('addToListModal');
+        const modalCloseBtn = modal.querySelector('.custom-modal-close-btn');
+        const modalOptionsContainer = modal.querySelector('#modalListOptions');
+        const modalTitle = modal.querySelector('#modalListName');
+        let filmeParaAdicionar = {};
+
+        const botaoAddLista = document.querySelector('.botao-add-lista');
+        if (botaoAddLista) {
+            botaoAddLista.addEventListener('click', function(event) {
+                event.preventDefault();
+                if (!USUARIO_AUTENTICADO) {
+                    window.location.href = JS_URLS.login;
+                    return;
+                }
+                if (LISTAS_PERSONALIZADAS.length === 0) {
+                    alert("Você não tem listas personalizadas. Crie uma no seu perfil!"); return;
+                }
+                filmeParaAdicionar = {
+                    id_tmdb: this.dataset.idTmdb,
+                    titulo: this.dataset.titulo,
+                    poster_path: this.dataset.poster
+                };
+                modalOptionsContainer.innerHTML = '';
+                LISTAS_PERSONALIZADAS.forEach(lista => {
+                    const listButton = document.createElement('button');
+                    listButton.textContent = lista.nome;
+                    listButton.dataset.listId = lista.id;
+                    modalOptionsContainer.appendChild(listButton);
+                });
+                modalTitle.textContent = `Adicionar "${filmeParaAdicionar.titulo}" a:`;
+                modal.style.display = 'flex';
+            });
+        }
+
+        if(modal) {
+            modalCloseBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+            window.addEventListener('click', (event) => { if (event.target == modal) { modal.style.display = 'none'; } });
+
+            modalOptionsContainer.addEventListener('click', function(event) {
+                if (event.target.tagName === 'BUTTON') {
+                    const idListaSelecionada = event.target.dataset.listId;
+                    fetch(JS_URLS.addToList, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                        body: JSON.stringify({
+                            id_tmdb: filmeParaAdicionar.id_tmdb,
+                            id_lista: idListaSelecionada,
+                            titulo: filmeParaAdicionar.titulo,
+                            poster_path: filmeParaAdicionar.poster_path
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.status === 'ok' || data.status === 'info') {
+                            modal.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        }
+    });
+    </script>
+{% endblock scripts %}
