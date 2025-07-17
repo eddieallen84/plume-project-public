@@ -104,7 +104,6 @@
   display: none;
 }
 
-
 /* NAVEGAÇÃO POR ABAS */
 .perfil-nav-tabs {
   margin: 25px 0;
@@ -161,7 +160,7 @@
 }
 
 /* TÍTULOS DE SEÇÃO DENTRO DAS ABAS */
-.tab-pane>.detalhe-secao-titulo {
+.tab-pane > .detalhe-secao-titulo {
   font-size: 1.8em;
   color: #fff;
   margin-top: 0;
@@ -221,53 +220,61 @@
   box-sizing: border-box;
 }
 .botao-remover-filme-lista > i {
-    font-size: 0.9em;
+  font-size: 0.9em;
 }
 .botao-remover-filme-lista:hover {
-    background-color: #a71b29;
+  background-color: #a71b29;
 }
 
 /* Regras para EXIBIR o botão de remover SOMENTE quando o modo de edição está ativo */
 
 /* 1. Para a lista de Favoritos (Visão Geral): Botão com texto e ícone */
-.filme-lista.perfil-filme-lista.editing-mode .botao-remover-filme-lista { /* <-- CORRIGIDO AQUI */
-    display: flex !important; /* Força a exibição */
-    width: calc(100% - 20px);
-    margin: 5px auto 10px auto;
-    text-indent: 0; /* Garante que o texto apareça */
-    white-space: normal;
-    overflow: visible;
+.filme-lista.perfil-filme-lista.editing-mode .botao-remover-filme-lista {
+  /* <-- CORRIGIDO AQUI */
+  display: flex !important; /* Força a exibição */
+  width: calc(100% - 20px);
+  margin: 5px auto 10px auto;
+  text-indent: 0; /* Garante que o texto apareça */
+  white-space: normal;
+  overflow: visible;
 }
 
 /* 2. Para os previews de listas personalizadas (Aba Minhas Listas): Botão APENAS com ícone, abaixo da imagem */
-.lista-poster-preview.editing-mode .preview-poster-item { /* <-- CORRIGIDO AQUI */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centraliza o conteúdo (imagem e botão) */
-    position: relative; /* Necessário para o posicionamento absoluto do botão */
-    padding-bottom: 30px; /* Adiciona espaço para o botão abaixo */
+.lista-poster-preview.editing-mode .preview-poster-item {
+  /* <-- CORRIGIDO AQUI */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centraliza o conteúdo (imagem e botão) */
+  position: relative; /* Necessário para o posicionamento absoluto do botão */
+  padding-bottom: 30px; /* Adiciona espaço para o botão abaixo */
 }
-.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista { /* <-- CORRIGIDO AQUI */
-    display: flex !important; /* Força a exibição */
-    position: absolute; /* Posição absoluta para ficar "colado" abaixo */
-    bottom: 0px; /* Alinha na parte inferior do item */
-    left: 50%;
-    transform: translateX(-50%); /* Centraliza horizontalmente */
-    width: calc(100% - 10px); /* Largura do botão relativa ao item preview */
-    padding: 4px 0; /* Padding vertical e horizontal para o botão */
-    border-radius: 5px;
-    font-size: 1em; /* Tamanho da fonte para o ícone */
-    line-height: 1; /* Ajusta a altura da linha para centralizar o ícone */
-    text-indent: 100%; /* Esconde o texto */
-    white-space: nowrap;
-    overflow: hidden;
-    z-index: 10;
+.lista-poster-preview.editing-mode
+  .preview-poster-item
+  .botao-remover-filme-lista {
+  /* <-- CORRIGIDO AQUI */
+  display: flex !important; /* Força a exibição */
+  position: absolute; /* Posição absoluta para ficar "colado" abaixo */
+  bottom: 0px; /* Alinha na parte inferior do item */
+  left: 50%;
+  transform: translateX(-50%); /* Centraliza horizontalmente */
+  width: calc(100% - 10px); /* Largura do botão relativa ao item preview */
+  padding: 4px 0; /* Padding vertical e horizontal para o botão */
+  border-radius: 5px;
+  font-size: 1em; /* Tamanho da fonte para o ícone */
+  line-height: 1; /* Ajusta a altura da linha para centralizar o ícone */
+  text-indent: 100%; /* Esconde o texto */
+  white-space: nowrap;
+  overflow: hidden;
+  z-index: 10;
 }
-.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista i { /* <-- CORRIGIDO AQUI */
-    text-indent: 0; /* Mostra o ícone */
-    font-size: 1.2em; /* Tamanho maior para o ícone */
+.lista-poster-preview.editing-mode
+  .preview-poster-item
+  .botao-remover-filme-lista
+  i {
+  /* <-- CORRIGIDO AQUI */
+  text-indent: 0; /* Mostra o ícone */
+  font-size: 1.2em; /* Tamanho maior para o ícone */
 }
-
 
 /* NOVO LAYOUT PARA LISTAS PERSONALIZADAS */
 .secao-listas-header {
@@ -362,14 +369,14 @@
 }
 
 .preview-poster-item {
-    position: relative;
-    background-color: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-    padding: 5px;
-    transition: background-color 0.2s ease;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  padding: 5px;
+  transition: background-color 0.2s ease;
 }
 .preview-poster-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .preview-poster-item img {
@@ -380,17 +387,15 @@
 }
 /* Link que envolve a imagem */
 .preview-poster-link {
-    display: block;
-    height: 100%;
-    text-decoration: none;
+  display: block;
+  height: 100%;
+  text-decoration: none;
 }
-
 
 .preview-vazia {
   color: #b0c9b3;
   font-style: italic;
 }
-
 
 /* ABA DE EDIÇÃO DE PERFIL */
 .form-editar-perfil-wrapper {
@@ -517,71 +522,76 @@
 
 /* ESTILOS PARA CABEÇALHOS E BOTÕES DE EDIÇÃO DE LISTA */
 .lista-detalhe-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(76, 175, 80, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.5);
 }
 .lista-detalhe-header .section-title {
-    margin-bottom: 0;
-    border: none;
-    padding-bottom: 0;
+  margin-bottom: 0;
+  border: none;
+  padding-bottom: 0;
 }
 .lista-acoes-modo-edicao {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 /* Estilo para botões gerais de edição/concluir (que têm fundo) */
-.botao-editar-lista, .botao-concluir-edicao {
-    background-color: #007bff;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 600;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+.botao-editar-lista,
+.botao-concluir-edicao {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
-.botao-editar-lista:hover, .botao-concluir-edicao:hover {
-    background-color: #0056b3;
-    transform: translateY(-1px);
+.botao-editar-lista:hover,
+.botao-concluir-edicao:hover {
+  background-color: #28a745;
+  transform: translateY(-1px);
 }
 .botao-concluir-edicao {
-    background-color: #28a745;
+  background-color: #28a745;
 }
 .botao-concluir-edicao:hover {
-    background-color: #218838;
+  background-color: #218838;
 }
 
 /* Estilo para ícones de ação de lista personalizada (Editar/Concluir/Excluir) - SEM FUNDO */
 .lista-card-acoes .botao-editar-lista-personalizada,
 .lista-card-acoes .botao-concluir-edicao-personalizada {
-    background: none; /* Fundo transparente */
-    border: none;
-    padding: 0; /* Remove padding */
-    font-size: 1.1em; /* Tamanho do ícone */
-    color: #66bb6a; /* Cor padrão para o ícone de editar */
-    cursor: pointer;
-    transition: color 0.2s ease, transform 0.2s ease;
+  background: none; /* Fundo transparente */
+  border: none;
+  padding: 0; /* Remove padding */
+  font-size: 1.1em; /* Tamanho do ícone */
+  color: #66bb6a; /* Cor padrão para o ícone de editar */
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 .lista-card-acoes .botao-editar-lista-personalizada:hover,
 .lista-card-acoes .botao-concluir-edicao-personalizada:hover {
-    color: #4caf50; /* Cor ao passar o mouse */
-    transform: scale(1.1);
+  color: #4caf50; /* Cor ao passar o mouse */
+  transform: scale(1.1);
 }
 .lista-card-acoes .botao-concluir-edicao-personalizada {
-    color: #28a745; /* Verde para o ícone de concluir */
+  color: #28a745; /* Verde para o ícone de concluir */
 }
 .lista-card-acoes .botao-concluir-edicao-personalizada:hover {
-    color: #218838;
+  color: #218838;
 }
 
 /* RESPONSIVIDADE */
 @media (max-width: 768px) {
+   
+  
+
   .perfil-info-principal {
     flex-direction: column;
     align-items: center;
@@ -655,11 +665,13 @@
     gap: 15px;
   }
   .lista-acoes-modo-edicao {
-    width: 100%;
+    width: fit;
     justify-content: space-around;
   }
-  .botao-editar-lista, .botao-concluir-edicao,
-  .botao-editar-lista-personalizada, .botao-concluir-edicao-personalizada {
+  .botao-editar-lista,
+  .botao-concluir-edicao,
+  .botao-editar-lista-personalizada,
+  .botao-concluir-edicao-personalizada {
     flex-grow: 1;
     text-align: center;
   }
