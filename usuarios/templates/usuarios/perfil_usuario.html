@@ -12,7 +12,7 @@
 <div class="container perfil-pagina-container">
     <section class="perfil-info-principal">
         <div class="perfil-avatar-coluna">
-            <img src="{{ perfil_modelo.get_avatar_url }}" alt="Avatar de {{ perfil_modelo.get_nome_completo }}" class="perfil-avatar-img-x" id="avatarDisplay">
+            <img src="{{ perfil_modelo.get_avatar_url }}" alt="Avatar de {{ perfil_modelo.get_nome_completo|default:usuario_perfil.username }}" class="perfil-avatar-img-x" id="avatarDisplay">
             <label for="avatarUploadInput" class="botao-acao-perfil botao-mudar-avatar-label">
                 <i class="fas fa-camera"></i> Mudar Foto
             </label>
@@ -29,7 +29,7 @@
             <div class="perfil-meta-info">
                 {% if perfil_modelo.cidade %}<span class="meta-item"><i class="fas fa-map-marker-alt"></i> {{ perfil_modelo.cidade }}</span>{% endif %}
                 {% if perfil_modelo.data_nascimento %}<span class="meta-item"><i class="fas fa-birthday-cake"></i> {{ perfil_modelo.data_nascimento|date:"d/m/Y" }}</span>{% endif %}
-                <span class="meta-item"><i class="fas fa-calendar-alt"></i> No Plume desde {{ usuario_perfil.date_joined|date:"F Y" }}</span>
+                <span class="meta-item"><i class="fas fa-calendar-alt"></i> No Plume desde {{ usuario_perfil.date_joined|date:"F \d\e Y" }}</span>
             </div>
             {% if perfil_modelo.biografia %}<p class="perfil-biografia-display">{{ perfil_modelo.biografia|linebreaksbr }}</p>
             {% else %}<p class="perfil-biografia-display"><i>Nenhuma biografia adicionada.</i></p>{% endif %}
@@ -184,40 +184,52 @@
 {% block scripts %}
     {{ block.super }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    {{ avatar_default_url|json_script:"avatar-default-url-data" }} 
     <script id="js-urls-perfil-data" type="application/json">
         {
-            "saveAvatarUrl": "{% url 'usuarios:ajax_save_avatar_url' %}",
-            "removerAvatarUrl": "{% url 'usuarios:ajax_remover_avatar' %}",
             "toggleFavoritoUrl": "{% url 'toggle_favorito' %}",
-            "ajaxDeleteListUrl": "{% url 'usuarios:ajax_delete_list' %}",
-            "removeFilmFromListUrl": "{% url 'usuarios:ajax_remove_film_from_list' %}"
+            "ajaxUploadAvatarUrl": "{% url 'usuarios:ajax_upload_avatar' %}",
+            "ajaxRemoverAvatarUrl": "{% url 'usuarios:ajax_remover_avatar' %}",
+            "ajaxDeleteListUrl": "{% url 'usuarios:ajax_delete_list' %}"
         }
     </script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const JS_URLS_PERFIL = JSON.parse(document.getElementById('js-urls-perfil-data').textContent);
-        function getCookie(name) {
-            if (document.cookie && document.cookie !== '') {
-                for (const cookie of document.cookie.split(';')) {
-                    const [key, value] = cookie.trim().split('=').map(decodeURIComponent);
-                    if (key === name) return value;
-                }
-            } return null;
-        }
         const csrftoken = getCookie('csrftoken');
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
         
+        // --- LÓGICA DAS ABAS ---
         const tabLinks = document.querySelectorAll('.perfil-nav-tabs .nav-link');
         const tabPanes = document.querySelectorAll('.perfil-tab-content .tab-pane');
+
         tabLinks.forEach(link => {
             link.addEventListener('click', function(event) {
                 event.preventDefault();
+                
                 tabLinks.forEach(l => l.classList.remove('active'));
                 tabPanes.forEach(p => p.classList.remove('active'));
+                
                 this.classList.add('active');
                 document.getElementById(this.dataset.tab).classList.add('active');
             });
         });
 
+        // --- LÓGICA DO AVATAR E CROPPER.JS ---
         const avatarUploadInput = document.getElementById('avatarUploadInput');
         const avatarDisplayImage = document.getElementById('avatarDisplay');
         const imageToCropElement = document.getElementById('imageToCropInModal');
@@ -227,251 +239,101 @@
         const removeAvatarButton = document.getElementById('removeAvatarButton');
         let cropperInstance = null;
 
-        if (avatarUploadInput) {
+        if(avatarUploadInput) {
             avatarUploadInput.addEventListener('change', function(event) {
                 if (event.target.files && event.target.files[0]) {
                     imageToCropElement.src = URL.createObjectURL(event.target.files[0]);
                     cropModalElement.style.display = 'flex';
                     if (cropperInstance) cropperInstance.destroy();
-                    cropperInstance = new Cropper(imageToCropElement, { aspectRatio: 1, viewMode: 1, autoCropArea: 1 });
+                    cropperInstance = new Cropper(imageToCropElement, { aspectRatio: 1, viewMode: 1 });
                 }
             });
         }
-        if (cancelCropButton) cancelCropButton.addEventListener('click', () => { cropModalElement.style.display = 'none'; });
-
-        if (confirmCropButton) {
+        if(cancelCropButton) cancelCropButton.addEventListener('click', () => cropModalElement.style.display = 'none');
+        if(confirmCropButton) {
             confirmCropButton.addEventListener('click', function() {
                 if (!cropperInstance) return;
-                confirmCropButton.textContent = 'Enviando...';
-                confirmCropButton.disabled = true;
-
-                cropperInstance.getCroppedCanvas({ width: 400, height: 400 }).toBlob(function(blob) {
+                cropperInstance.getCroppedCanvas({ width: 300, height: 300 }).toBlob(function(blob) {
                     const formData = new FormData();
-                    formData.append('file', blob);
-                    formData.append('upload_preset', 'ml_default');
-                    
-                    const CLOUD_NAME = "dgvik6wm6"; // Substitua pelo seu Cloud Name real
-                    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-
-                    fetch(uploadUrl, { method: 'POST', body: formData })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.public_id) {
-                            return fetch(JS_URLS_PERFIL.saveAvatarUrl, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                                body: JSON.stringify({ public_id: data.public_id })
-                            });
-                        } else { throw new Error('Falha no upload para o Cloudinary.'); }
-                    })
+                    formData.append('avatar', blob, 'avatar.png');
+                    fetch(JS_URLS_PERFIL.ajaxUploadAvatarUrl, { method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            window.location.reload();
-                        } else { throw new Error(data.message || 'Falha ao salvar no perfil.'); }
-                    })
-                    .catch(error => {
-                        console.error('Erro no processo de upload:', error);
-                        alert('Ocorreu um erro ao enviar seu avatar. Tente novamente.');
-                    })
-                    .finally(() => {
-                        confirmCropButton.textContent = 'Cortar e Salvar';
-                        confirmCropButton.disabled = false;
-                        cropModalElement.style.display = 'none';
-                    });
+                            avatarDisplayImage.src = data.avatar_url + '?t=' + new Date().getTime();
+                            if(removeAvatarButton) removeAvatarButton.classList.remove('hidden');
+                        } else { alert(data.message || 'Erro no upload.'); }
+                    }).finally(() => cropModalElement.style.display = 'none');
                 });
             });
         }
-        
         if (removeAvatarButton) {
             removeAvatarButton.addEventListener('click', function() {
-                if(confirm("Tem certeza que deseja remover sua foto de perfil?")) {
-                    fetch(JS_URLS_PERFIL.removerAvatarUrl, {method: 'POST', headers: { 'X-CSRFToken': csrftoken }})
-                    .then(res => res.json())
+                if (confirm("Remover sua foto de perfil?")) {
+                    fetch(JS_URLS_PERFIL.ajaxRemoverAvatarUrl, { method: 'POST', headers: { 'X-CSRFToken': csrftoken }})
+                    .then(response => response.json())
                     .then(data => {
-                        if(data.status === 'success') window.location.reload();
-                        else alert(data.message || 'Erro ao remover foto.');
-                    })
+                        if (data.status === 'success') {
+                            avatarDisplayImage.src = data.avatar_url;
+                            this.classList.add('hidden');
+                        } else { alert(data.message || 'Erro ao remover.'); }
+                    });
                 }
             });
         }
         
-        const abrirModalCriarListaBtn = document.getElementById('abrirModalCriarLista');
-        const modalCriarLista = document.getElementById('modalCriarLista');
-        const fecharModalCriarListaBtn = modalCriarLista ? modalCriarLista.querySelector('.custom-modal-close-btn') : null;
+        // --- LÓGICA PARA REMOVER FILMES E LISTAS ---
+        document.querySelector('.perfil-tab-content').addEventListener('click', function(event) {
+            const botaoRemoverFavorito = event.target.closest('.botao-remover-favorito-perfil');
+            const botaoExcluirLista = event.target.closest('.botao-excluir-lista');
 
-        if (abrirModalCriarListaBtn) {
-            abrirModalCriarListaBtn.addEventListener('click', function() {
-                if (modalCriarLista) {
-                    modalCriarLista.style.display = 'flex';
-                }
-            });
-        }
-
-        if (fecharModalCriarListaBtn) {
-            fecharModalCriarListaBtn.addEventListener('click', function() {
-                if (modalCriarLista) {
-                    modalCriarLista.style.display = 'none';
-                }
-            });
-        }
-
-        if (modalCriarLista) {
-            window.addEventListener('click', function(event) {
-                if (event.target == modalCriarLista) {
-                    modalCriarLista.style.display = 'none';
-                }
-            });
-        }
-        
-        const botaoEditarFavoritos = document.getElementById('botaoEditarFavoritos');
-        const botaoConcluirEdicaoFavoritos = document.getElementById('botaoConcluirEdicaoFavoritos');
-        const listaFavoritosContainer = document.getElementById('lista-favoritos-container');
-
-        function toggleEditModeFavoritos(enable) {
-            if (enable) {
-                listaFavoritosContainer.classList.add('edit-mode');
-                botaoEditarFavoritos.style.display = 'none';
-                botaoConcluirEdicaoFavoritos.style.display = 'inline-block';
-            } else {
-                listaFavoritosContainer.classList.remove('edit-mode');
-                botaoEditarFavoritos.style.display = 'inline-block';
-                botaoConcluirEdicaoFavoritos.style.display = 'none';
+            if (botaoRemoverFavorito) {
+                event.preventDefault();
+                const filmeIdTmdb = botaoRemoverFavorito.dataset.idTmdb;
+                fetch(JS_URLS_PERFIL.toggleFavoritoUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ id_tmdb: filmeIdTmdb })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok' && !data.is_favorito) {
+                        botaoRemoverFavorito.closest('.filme-item-wrapper-perfil').remove();
+                    }
+                });
             }
-        }
 
-        if (botaoEditarFavoritos) {
-            botaoEditarFavoritos.addEventListener('click', function() {
-                toggleEditModeFavoritos(true);
-            });
-        }
-        if (botaoConcluirEdicaoFavoritos) {
-            botaoConcluirEdicaoFavoritos.addEventListener('click', function() {
-                toggleEditModeFavoritos(false);
-            });
-        }
+            if (botaoExcluirLista) {
+                event.preventDefault();
+                const listId = botaoExcluirLista.dataset.listId;
+                const listName = botaoExcluirLista.dataset.listName;
+                if (confirm(`Tem certeza que deseja excluir a lista "${listName}"?`)) {
+                    fetch(JS_URLS_PERFIL.ajaxDeleteListUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                        body: JSON.stringify({ id_lista: listId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            document.getElementById(`lista-personalizada-${listId}`).remove();
+                        } else { alert(data.message || "Não foi possível excluir."); }
+                    });
+                }
+            }
+        });
         
-        // --- CÓDIGO PARA EDIÇÃO DE LISTAS E DELEÇÃO DE FILMES (GERAL) ---
-        const listasPersonalizadasContainer = document.querySelector('.listas-personalizadas-container');
-
-        if (listasPersonalizadasContainer) {
-            listasPersonalizadasContainer.addEventListener('click', function(event) {
-                // Lógica para excluir a lista (botão da lixeira) - permanece
-                const botaoExcluirLista = event.target.closest('.botao-excluir-lista');
-                if (botaoExcluirLista) {
-                    const listId = botaoExcluirLista.dataset.listId;
-                    const listName = botaoExcluirLista.dataset.listName;
-                    if(confirm(`Tem certeza que deseja excluir a lista "${listName}"?`)) {
-                        fetch(JS_URLS_PERFIL.ajaxDeleteListUrl, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
-                            body: JSON.stringify({'id_lista': listId})
-                        }).then(res => res.json()).then(data => {
-                            if(data.status === 'ok') document.getElementById(`lista-personalizada-${listId}`).remove();
-                            else alert(data.message || 'Erro ao excluir');
-                        })
-                    }
-                }
-
-                // Lógica para editar/concluir edição de lista personalizada
-                const botaoEditarPersonalizada = event.target.closest('.botao-editar-lista-personalizada');
-                const botaoConcluirPersonalizada = event.target.closest('.botao-concluir-edicao-personalizada');
-                
-                if (botaoEditarPersonalizada || botaoConcluirPersonalizada) {
-                    const listaCard = event.target.closest('.lista-personalizada-card');
-                    const listaPreviewFilmes = listaCard ? listaCard.querySelector('.preview-poster-grid') : null; // ALVO CORRETO AGORA
-                    const editButton = listaCard ? listaCard.querySelector('.botao-editar-lista-personalizada') : null;
-                    const doneButton = listaCard ? listaCard.querySelector('.botao-concluir-edicao-personalizada') : null;
-
-                    if (listaPreviewFilmes && editButton && doneButton) {
-                        if (botaoEditarPersonalizada) { // Se clicou em Editar
-                            listaPreviewFilmes.classList.add('edit-mode');
-                            editButton.style.display = 'none';
-                            doneButton.style.display = 'inline-block';
-                        } else if (botaoConcluirPersonalizada) { // Se clicou em Concluir
-                            listaPreviewFilmes.classList.remove('edit-mode');
-                            editButton.style.display = 'inline-block';
-                            doneButton.style.display = 'none';
-                        }
-                    }
-                }
-
-                // Lógica para remover filme de lista (tanto favoritos quanto personalizadas)
-                const botaoRemoverFilme = event.target.closest('.botao-remover-filme-lista');
-                if (botaoRemoverFilme) {
-                    const listaContainer = botaoRemoverFilme.closest('.filme-lista.perfil-filme-lista, .preview-poster-grid'); // PODE SER FAVORITOS OU LISTA PERSONALIZADA
-                    
-                    // Somente permite remover se o container pai estiver em modo de edição
-                    if (listaContainer && listaContainer.classList.contains('edit-mode')) {
-                        event.preventDefault(); 
-
-                        const listId = botaoRemoverFilme.dataset.listId;
-                        const filmeId = botaoRemoverFilme.dataset.idTmdb;
-                        const filmeTitulo = botaoRemoverFilme.title.replace("Remover '", "").replace("' desta lista", "").replace("Remover dos Favoritos", "").trim(); // Lógica para obter o título de ambos os casos
-
-                        if (!listId || !filmeId) {
-                            alert('Erro: IDs de lista ou filme não encontrados.');
-                            return;
-                        }
-
-                        if (confirm(`Tem certeza que deseja remover "${filmeTitulo}" desta lista?`)) {
-                            fetch(JS_URLS_PERFIL.removeFilmFromListUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': csrftoken
-                                },
-                                body: JSON.stringify({ id_lista: listId, id_tmdb: filmeId })
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                   return response.json().then(err => { 
-                                       throw new Error(err.message || `Erro ${response.status} do servidor.`); 
-                                   });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.status === 'ok') {
-                                    botaoRemoverFilme.closest('.filme-item-wrapper-perfil').remove();
-                                    // ATUALIZA A CONTAGEM DE FILMES NO CARD DA LISTA PERSONALIZADA
-                                    if (listaContainer.classList.contains('preview-poster-grid')) { // Apenas se for uma lista personalizada
-                                        const listaCard = listaContainer.closest('.lista-personalizada-card');
-                                        const contadorSpan = listaCard ? listaCard.querySelector('.lista-card-contador') : null;
-                                        if (contadorSpan) {
-                                            let currentCount = parseInt(contadorSpan.textContent.match(/\d+/)[0]); // Pega apenas o número
-                                            contadorSpan.textContent = `${currentCount - 1} filme(s)`;
-                                        }
-                                    }
-                                    
-                                    // SE A LISTA FICAR VAZIA, EXIBE A MENSAGEM
-                                    if (listaContainer.querySelectorAll('.filme-item-wrapper-perfil').length === 0) {
-                                        let messageElem = listaContainer.querySelector('.lista-vazia-mensagem');
-                                        if (!messageElem) { // Se a mensagem não existir, cria
-                                            messageElem = document.createElement('p');
-                                            messageElem.className = 'lista-vazia-mensagem';
-                                            listaContainer.appendChild(messageElem);
-                                        }
-                                        messageElem.textContent = listaContainer.id === 'lista-favoritos-container' ? 
-                                                                  'Sua lista de favoritos está vazia.' : 
-                                                                  'Esta lista ficou vazia.';
-                                        messageElem.style.display = 'block'; 
-                                    }
-                                } else {
-                                    alert(data.message);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Falha na requisição:', error);
-                                alert('Ocorreu um erro ao remover o filme: ' + error.message);
-                            });
-                        }
-                    }
-                }
+        // --- LÓGICA PARA O MODAL DE CRIAR LISTA ---
+        const botaoAbrirModal = document.getElementById('abrirModalCriarLista');
+        const modalCriarLista = document.getElementById('modalCriarLista');
+        if (botaoAbrirModal && modalCriarLista) {
+            const botaoFechar = modalCriarLista.querySelector('.custom-modal-close-btn');
+            botaoAbrirModal.addEventListener('click', () => modalCriarLista.style.display = 'flex');
+            botaoFechar.addEventListener('click', () => modalCriarLista.style.display = 'none');
+            window.addEventListener('click', (event) => {
+                if (event.target == modalCriarLista) modalCriarLista.style.display = 'none';
             });
         }
-        // --- FIM DO NOVO CÓDIGO ---
-
     });
     </script>
 {% endblock scripts %}
