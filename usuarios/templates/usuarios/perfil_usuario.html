@@ -64,7 +64,7 @@
                                 {% else %}
                                     <img class="imagem-placeholder" src="{% static 'img/placeholder_poster.png' %}" alt="Pôster indisponível">
                                 {% endif %}
-                               
+                                <div class="titulo-wrapper"><p class="filme-titulo">{{ filme_obj.titulo }}</p></div>
                             </div>
                         </a>
                         <button class="botao botao-remover-filme-lista hidden-on-default" 
