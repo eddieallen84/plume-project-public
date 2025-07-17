@@ -1,5 +1,5 @@
 # PLUME-PROJECT/usuarios/urls.py
-from django.urls import path, reverse_lazy # <-- ADICIONE reverse_lazy
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from .views import (
     CadastroView, CustomLoginView, CustomLogoutView, perfil_usuario,
@@ -8,6 +8,7 @@ from .views import (
     excluir_conta_view,
     ajax_delete_list_view,
     detalhe_lista_view,
+    ajax_remover_filme_da_lista, # <-- ADICIONE ESTA IMPORTAÇÃO
 )
 
 app_name = 'usuarios'
@@ -23,6 +24,9 @@ urlpatterns = [
     path('perfil/excluir-conta/', excluir_conta_view, name='excluir_conta'),
     path('perfil/ajax-delete-list/', ajax_delete_list_view, name='ajax_delete_list'),
     path('lista/<int:lista_id>/', detalhe_lista_view, name='detalhe_lista'),
+
+    # NOVA URL PARA REMOVER FILMES DE LISTAS PERSONALIZADAS
+      path('listas/ajax-remover-filme/', ajax_remover_filme_da_lista, name='ajax_remover_filme_da_lista'),
 
     # --- BLOCO DE URLS PARA RECUPERAÇÃO DE SENHA (COM CORREÇÃO) ---
     path('reset_password/', 
@@ -47,7 +51,7 @@ urlpatterns = [
             # CORREÇÃO 2: Informa a URL de sucesso correta para esta etapa também
             success_url=reverse_lazy('usuarios:password_reset_complete')
          ), 
-         name='password_reset_confirm'),
+         name='password_reset_complete'),
          
     path('reset_password/complete/', 
          auth_views.PasswordResetCompleteView.as_view(

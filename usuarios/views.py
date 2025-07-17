@@ -11,8 +11,8 @@ from django.templatetags.static import static
 import json
 
 from .forms import NovoUsuarioForm, PerfilForm, AvatarUploadForm
-from .models import Perfil
-from filmes.models import ListaFavoritos
+from .models import Perfil # Assumindo que Perfil está em .models
+from filmes.models import ListaFavoritos, Filme # <-- Verifique e adicione esta importação para Filme e ListaFavoritos/ListaPersonalizada
 from filmes.utils import get_lista_generos
 from django.contrib.auth import logout 
 
@@ -231,3 +231,44 @@ def detalhe_lista_view(request, lista_id):
     }
     
     return render(request, 'usuarios/detalhe_lista.html', context)
+
+
+@login_required
+@require_POST
+def ajax_remover_filme_da_lista(request): 
+    """
+    Remove um filme de uma lista personalizada ou da lista de favoritos do usuário via AJAX.
+    Este endpoint agora pode ser usado para ambas as listas, dependendo do list_id.
+    """
+    try:
+        data = json.loads(request.body)
+        list_id = data.get('list_id')
+        id_tmdb = data.get('id_tmdb')
+
+        if not list_id or not id_tmdb:
+            return JsonResponse({'status': 'error', 'message': 'ID da lista ou do filme não fornecido.'}, status=400)
+
+        try:
+            # Obtém a lista, garantindo que ela pertence ao usuário logado
+            # 'ListaFavoritos' é o seu modelo para representar as listas, sejam elas padrão ou personalizadas.
+            lista = ListaFavoritos.objects.get(id=list_id, usuario=request.user) 
+            filme = Filme.objects.get(id_tmdb=id_tmdb) 
+            
+            if filme in lista.filmes.all():
+                lista.filmes.remove(filme)
+                # Não é estritamente necessário chamar .save() para ManyToManyField após remove(),
+                # mas não faz mal e garante que qualquer sinal associado seja disparado.
+                # lista.save() 
+                return JsonResponse({'status': 'ok', 'message': 'Filme removido com sucesso.'}) 
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Filme não encontrado nesta lista.'}, status=404) 
+        except ListaFavoritos.DoesNotExist: 
+            return JsonResponse({'status': 'error', 'message': 'Lista não encontrada ou não pertence ao usuário.'}, status=404)
+        except Filme.DoesNotExist: 
+            return JsonResponse({'status': 'error', 'message': 'Filme não encontrado.'}, status=404)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Requisição JSON inválida.'}, status=400)
+    except Exception as e:
+        # Logar o erro 'e' para depuração em produção
+        return JsonResponse({'status': 'error', 'message': f'Um erro inesperado ocorreu: {str(e)}'}, status=500)

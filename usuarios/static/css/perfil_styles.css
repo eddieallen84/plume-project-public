@@ -230,7 +230,7 @@
 /* Regras para EXIBIR o botão de remover SOMENTE quando o modo de edição está ativo */
 
 /* 1. Para a lista de Favoritos (Visão Geral): Botão com texto e ícone */
-.filme-lista.perfil-filme-lista.edit-mode .botao-remover-filme-lista {
+.filme-lista.perfil-filme-lista.editing-mode .botao-remover-filme-lista { /* <-- CORRIGIDO AQUI */
     display: flex !important; /* Força a exibição */
     width: calc(100% - 20px);
     margin: 5px auto 10px auto;
@@ -240,14 +240,14 @@
 }
 
 /* 2. Para os previews de listas personalizadas (Aba Minhas Listas): Botão APENAS com ícone, abaixo da imagem */
-.lista-poster-preview.edit-mode .preview-poster-item {
+.lista-poster-preview.editing-mode .preview-poster-item { /* <-- CORRIGIDO AQUI */
     display: flex;
     flex-direction: column;
     align-items: center; /* Centraliza o conteúdo (imagem e botão) */
     position: relative; /* Necessário para o posicionamento absoluto do botão */
     padding-bottom: 30px; /* Adiciona espaço para o botão abaixo */
 }
-.lista-poster-preview.edit-mode .preview-poster-item .botao-remover-filme-lista {
+.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista { /* <-- CORRIGIDO AQUI */
     display: flex !important; /* Força a exibição */
     position: absolute; /* Posição absoluta para ficar "colado" abaixo */
     bottom: 0px; /* Alinha na parte inferior do item */
@@ -263,7 +263,7 @@
     overflow: hidden;
     z-index: 10;
 }
-.lista-poster-preview.edit-mode .preview-poster-item .botao-remover-filme-lista i {
+.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista i { /* <-- CORRIGIDO AQUI */
     text-indent: 0; /* Mostra o ícone */
     font-size: 1.2em; /* Tamanho maior para o ícone */
 }
