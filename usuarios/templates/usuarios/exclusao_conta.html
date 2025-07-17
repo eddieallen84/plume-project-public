@@ -3,11 +3,7 @@
 {% block extrastyles %}
 {{ block.super }} {# Mantém estilos do base, se houver #}
 {% load static %}
-{# Certifique-se que o auth_styles.css está sendo carregado.
-Se seu base já carrega um CSS principal, e auth_styles complementa, ótimo.
-Caso contrário, adicione o link aqui se for específico para esta página.
-Se auth_styles já está no seu CSS global, não precisa linkar de novo.
-Assumindo que precisa ser linkado aqui para garantir: #}
+
 <link rel="stylesheet" href="{% static 'css/auth_styles.css' %}">
 {# Garanta que FontAwesome esteja disponível (geralmente carregado no base) #}
 {% endblock extrastyles %}

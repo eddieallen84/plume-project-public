@@ -10,11 +10,18 @@
 {% block content %}
 <div class="container">
     {% csrf_token %}
-    <h1 class="section-title"><i class="fas fa-list-alt icone-lista-titulo"></i> {{ lista.nome }}</h1>
+    <div class="lista-detalhe-header"> {# Contêiner para título e botões de edição #}
+        <h1 class="section-title"><i class="fas fa-list-alt icone-lista-titulo"></i> {{ lista.nome }}</h1>
+        <div class="lista-acoes-modo-edicao"> {# Botões de edição #}
+            <button id="botaoEditarLista" class="botao-editar-lista"><i class="fas fa-edit"></i> Editar</button>
+            <button id="botaoConcluirEdicao" class="botao-concluir-edicao" style="display: none;"><i class="fas fa-check"></i> Concluir</button>
+        </div>
+    </div>
 
     <div class="filme-lista perfil-filme-lista" id="lista-detalhe-container">
         {% for filme_obj in filmes_na_lista %}
             <div class="filme-item-wrapper-perfil" data-filme-card-idtmdb="{{ filme_obj.id_tmdb }}">
+                {# IMAGENS COMO LINKS PARA DETALHE DO FILME - JÁ EXISTIA E ESTÁ CORRETO #}
                 <a href="{% url 'detalhe_filme' filme_id=filme_obj.id_tmdb %}" class="filme-link-wrapper">
                     <div class="filme-item filme-item-perfil">
                         {% if filme_obj.poster_path %}
@@ -25,8 +32,9 @@
                         <div class="titulo-wrapper"><p class="filme-titulo">{{ filme_obj.titulo }}</p></div>
                     </div>
                 </a>
+                {# Botão de remover que será visível no modo de edição #}
                 <button class="botao botao-remover-favorito-perfil" 
-                        data-list-id="{{ lista.id }}" 
+                        data-list-id="{{ lista.id }}" {# ID da lista atual #}
                         data-id-tmdb="{{ filme_obj.id_tmdb }}"
                         title="Remover '{{ filme_obj.titulo }}' desta lista">
                     <i class="fas fa-trash-alt"></i> REMOVER
@@ -34,7 +42,7 @@
             </div>
         {% empty %}
             <div class="lista-vazia-wrapper" style="width: 100%;">
-                <p class="lista-vazia-mensagem">Esta lista ainda está vazia.</p>
+                <p class="lista-vazia-mensagem" id="listaVaziaMensagem">Esta lista ainda está vazia.</p>
             </div>
         {% endfor %}
     </div>
@@ -42,28 +50,68 @@
 {% endblock %}
 
 {% block scripts %}
-    {# REMOVIDO block.super PARA GARANTIR TOTAL ISOLAMENTO DESTE SCRIPT #}
+    {{ block.super }} {# Mantido para carregar scripts do lista_filmes.html #}
+    <script id="js-urls-detalhe-lista" type="application/json">
+        {
+            "removeFilmFromListUrl": "{% url 'usuarios:ajax_remove_film_from_list' %}"
+        }
+    </script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const botoesRemover = document.querySelectorAll('.botao-remover-favorito-perfil');
         const containerLista = document.getElementById('lista-detalhe-container');
+        const listaVaziaMensagem = document.getElementById('listaVaziaMensagem');
 
-        botoesRemover.forEach(botao => {
-            botao.addEventListener('click', function(event) {
+        // Botões de modo de edição para esta lista (personalizada)
+        const botaoEditarLista = document.getElementById('botaoEditarLista');
+        const botaoConcluirEdicao = document.getElementById('botaoConcluirEdicao');
+        
+        const JS_URLS_DETALHE_LISTA = JSON.parse(document.getElementById('js-urls-detalhe-lista').textContent);
+
+        // Função para alternar o modo de edição
+        function toggleEditMode(enable) {
+            if (enable) {
+                containerLista.classList.add('edit-mode');
+                botaoEditarLista.style.display = 'none';
+                botaoConcluirEdicao.style.display = 'inline-block';
+            } else {
+                containerLista.classList.remove('edit-mode');
+                botaoEditarLista.style.display = 'inline-block';
+                botaoConcluirEdicao.style.display = 'none';
+            }
+        }
+
+        // Event Listeners para os botões de modo
+        if (botaoEditarLista) {
+            botaoEditarLista.addEventListener('click', function() {
+                toggleEditMode(true);
+            });
+        }
+        if (botaoConcluirEdicao) {
+            botaoConcluirEdicao.addEventListener('click', function() {
+                toggleEditMode(false);
+            });
+        }
+
+        // Lógica de remoção de filme da lista (delegação de evento)
+        containerLista.addEventListener('click', function(event) {
+            const botaoRemover = event.target.closest('.botao-remover-favorito-perfil');
+            
+            // Só executa se estiver em modo de edição E o botão clicado for de remover
+            if (botaoRemover && containerLista.classList.contains('edit-mode')) {
                 event.preventDefault();
 
-                const listId = this.dataset.listId;
-                const filmeId = this.dataset.idTmdb;
-                
+                const listId = botaoRemover.dataset.listId;
+                const filmeId = botaoRemover.dataset.idTmdb;
+                const filmeTitulo = botaoRemover.title.replace("Remover '", "").replace("' desta lista", "");
+
                 if (!listId || !filmeId) {
-                    alert('Erro: IDs não encontrados no botão.');
+                    alert('Erro: IDs não encontrados no botão de remover.');
                     return;
                 }
 
-                if (confirm("Tem certeza que deseja remover este filme da lista?")) {
-                    // URL está diretamente no código para evitar qualquer erro de variável
-                    fetch('/ajax/remove-from-list/', {
+                if (confirm(`Tem certeza que deseja remover "${filmeTitulo}" desta lista?`)) {
+                    fetch(JS_URLS_DETALHE_LISTA.removeFilmFromListUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -73,7 +121,6 @@
                     })
                     .then(response => {
                         if (!response.ok) {
-                           // Tenta extrair a mensagem de erro do JSON, se houver
                            return response.json().then(err => { 
                                throw new Error(err.message || `Erro ${response.status} do servidor.`); 
                            });
@@ -83,25 +130,30 @@
                     .then(data => {
                         if (data.status === 'ok') {
                             // Encontra o elemento pai do card e o remove
-                            this.closest('.filme-item-wrapper-perfil').remove();
+                            botaoRemover.closest('.filme-item-wrapper-perfil').remove();
                             // Se a lista ficar vazia, exibe a mensagem
                             if (containerLista.querySelectorAll('.filme-item-wrapper-perfil').length === 0) {
-                                const p = document.createElement('p');
-                                p.className = 'lista-vazia-mensagem';
-                                p.textContent = 'Esta lista ficou vazia.';
-                                containerLista.appendChild(p);
+                                if (listaVaziaMensagem) {
+                                    listaVaziaMensagem.textContent = 'Esta lista ficou vazia.';
+                                    listaVaziaMensagem.style.display = 'block';
+                                } else {
+                                    const p = document.createElement('p');
+                                    p.className = 'lista-vazia-mensagem';
+                                    p.id = 'listaVaziaMensagem'; // Adiciona ID para futuras verificações
+                                    p.textContent = 'Esta lista ficou vazia.';
+                                    containerLista.appendChild(p);
+                                }
                             }
                         } else {
-                            // Mostra a mensagem de erro vinda do servidor
                             alert(data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Falha na requisição:', error);
-                        alert('Ocorreu um erro: ' + error.message);
+                        alert('Ocorreu um erro ao remover o filme: ' + error.message);
                     });
                 }
-            });
+            }
         });
     });
     </script>

@@ -68,12 +68,12 @@
                         data-titulo="{{ filme.title }}" data-poster="{{ filme.poster_path|default:'' }}"
                         title="Adicionar/Remover dos Favoritos">
                         <i class="{% if is_favorito_atual %}fas{% else %}far{% endif %} fa-heart"></i> 
-                        <span class="texto-botao">{% if is_favorito_atual %}Favorito!{% else %}Favoritos{% endif %}</span>
+                        <span class="texto-botao">{% if is_favorito_atual %}Favorito{% else %}Favoritos{% endif %}</span>
                     </button>
                     <button class="botao botao-add-lista" data-id-tmdb="{{ filme.id }}"
                         data-titulo="{{ filme.title }}" data-poster="{{ filme.poster_path|default:'' }}"
                         title="Adicionar a uma lista personalizada">
-                        <i class="fas fa-plus"></i> <span>Lista +</span>
+                        <i class="fas fa-plus"></i> <span>Lista</span>
                     </button>
                 </div>
 
