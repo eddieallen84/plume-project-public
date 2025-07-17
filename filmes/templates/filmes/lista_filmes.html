@@ -118,14 +118,14 @@
                     <div class="botao-container">
                         <button class="botao botao-favorito {% if filme.is_favorito %}favoritado{% endif %}" 
                                 data-id-tmdb="{{ filme.id }}"
-                                data-titulo="{{ filme.title|escapejs }}" 
+                                data-titulo="{{ filme.title }}" 
                                 data-poster="{{ filme.poster_path|default:'' }}">
                             <i class="{% if filme.is_favorito %}fas{% else %}far{% endif %} fa-heart"></i>
                             <span>{% if filme.is_favorito %}Favorito!{% else %}Favoritos{% endif %}</span>
                         </button>
                         <button class="botao botao-add-lista" 
                                 data-id-tmdb="{{ filme.id }}"
-                                data-titulo="{{ filme.title|escapejs }}" 
+                                data-titulo="{{ filme.title }}" 
                                 data-poster="{{ filme.poster_path|default:'' }}">
                             <i class="fas fa-plus"></i> <span>Lista +</span>
                         </button>
