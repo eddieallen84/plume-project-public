@@ -251,8 +251,7 @@ def add_filme_to_list_view(request):
 
     except ListaFavoritos.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Lista não encontrada ou não pertence a você."}, status=404)
-    except Exception:
-        return JsonResponse({"status": "error", "message": "Ocorreu um erro interno."}, status=500)
+    
 
 @login_required
 @require_POST
