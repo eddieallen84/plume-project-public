@@ -38,7 +38,9 @@ body {
   text-transform: uppercase;
 }
 .main-navigation {
-  margin-right: auto; /* <<< MODIFICADO AQUI */
+  margin: 0 auto;
+  
+
 }
 .main-navigation ul {
   list-style-type: none;
