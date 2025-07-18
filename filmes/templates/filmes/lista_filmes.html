@@ -28,16 +28,15 @@
             <nav class="main-navigation">
                 <ul>
                     <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}class="active"{% endif %}>Populares</a></li>
-                    <li><a href="{% url 'filmes_lancamentos' %}" {% if request.resolver_match.url_name == 'filmes_lancamentos' %}class="active"{% endif %}>Lançamentos</a></li>
                     {% if generos_menu_para_exibir %}
-                        {% for genero_item in generos_menu_para_exibir|slice:":5" %}
+                        {% for genero_item in generos_menu_para_exibir|slice:":6" %}
                             <li><a href="{% url 'filmes_por_genero' id_genero=genero_item.id %}" {% if genero_item.id == id_genero_ativo %}class="active"{% endif %}>{{ genero_item.name }}</a></li>
                         {% endfor %}
-                        {% if generos_menu_para_exibir|length > 5 %}
+                        {% if generos_menu_para_exibir|length > 6 %}
                              <li class="dropdown-container">
                                 <a href="#" class="mais-generos-link" onclick="return false;">Mais  <i class="fas fa-caret-down"></i></a>
                                 <ul class="dropdown-menu-custom">
-                                    {% for genero_item in generos_menu_para_exibir|slice:"5:" %}
+                                    {% for genero_item in generos_menu_para_exibir|slice:"6:" %}
                                     <li><a href="{% url 'filmes_por_genero' id_genero=genero_item.id %}" {% if genero_item.id == id_genero_ativo %}class="active"{% endif %}>{{ genero_item.name }}</a></li>
                                     {% endfor %}
                                 </ul>

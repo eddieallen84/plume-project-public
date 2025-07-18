@@ -8,7 +8,7 @@ from datetime import datetime
 
 from .utils import (
     get_filmes_populares,
-    get_filmes_lancamento,
+    # get_filmes_lancamento, <-- REMOVIDO
     get_filmes_por_genero,
     get_detalhes_filme,
     search_tmdb_filmes,
@@ -114,45 +114,7 @@ def home(request):
     return render(request, "filmes/lista_filmes.html", context)
 
 
-def filmes_lancamentos(request):
-    page_num = int(request.GET.get("page", "1"))
-    sort_by_param = request.GET.get("sort_by", "popularity.desc")
-    api_response = get_filmes_lancamento(page=page_num, sort_by=sort_by_param)
-
-    lista_de_filmes, pagina_atual, total_de_paginas = processar_resposta_api(
-        api_response
-    )
-    lista_de_filmes = enrich_filmes_with_favoritos(request, lista_de_filmes)
-
-    query_params = request.GET.copy()
-    query_params.pop("page", None)
-    base_query_string = query_params.urlencode()
-
-    listas_personalizadas_usuario = []
-    if request.user.is_authenticated:
-        listas_personalizadas_usuario = list(
-            ListaFavoritos.objects.filter(usuario=request.user, padrao=False).values(
-                "id", "nome"
-            )
-        )
-
-    context = {
-        "titulo_secao": "Lançamentos",
-        "lista_filmes": lista_de_filmes,
-        "pagina_atual": pagina_atual,
-        "total_de_paginas": total_de_paginas,
-        "numeros_de_pagina_para_template": gerar_numeros_paginacao(
-            pagina_atual, total_de_paginas
-        ),
-        "base_poster_url": "https://image.tmdb.org/t/p/w200",
-        "pode_ordenar": True,
-        "sort_by_options": SORT_BY_OPTIONS,
-        "sort_by_atual": sort_by_param,
-        "base_query_string_pagination": base_query_string,
-        "request_path": request.path,
-        "listas_personalizadas_usuario": listas_personalizadas_usuario,
-    }
-    return render(request, "filmes/lista_filmes.html", context)
+# A FUNÇÃO INTEIRA 'filmes_lancamentos' FOI REMOVIDA DAQUI
 
 
 def view_filmes_por_genero(request, id_genero):
@@ -323,11 +285,8 @@ def toggle_favorito(request):
         data = json.loads(request.body.decode("utf-8"))
         filme_id_tmdb = int(data.get("id_tmdb"))
 
-        # Busca ou cria o filme no nosso banco
         filme_obj, created = Filme.objects.get_or_create(id_tmdb=filme_id_tmdb)
 
-        # Se o filme acabou de ser criado, ele não tem título nem poster.
-        # Vamos buscar os dados corretos da API do TMDB, que é nossa fonte da verdade.
         if created:
             detalhes_filme = get_detalhes_filme(filme_id_tmdb)
             if detalhes_filme:
@@ -335,7 +294,6 @@ def toggle_favorito(request):
                 filme_obj.poster_path = detalhes_filme.get("poster_path", "")
                 filme_obj.save()
 
-        # Continua com a lógica de adicionar/remover da lista de favoritos
         lista_favoritos_padrao, _ = ListaFavoritos.objects.get_or_create(
             usuario=request.user, padrao=True, defaults={"nome": "Favoritos"}
         )
@@ -353,7 +311,6 @@ def toggle_favorito(request):
             {"status": "ok", "is_favorito": is_favorito_agora, "message": message}
         )
     except Exception as e:
-        # É uma boa prática logar o erro para debugging futuro
         print(f"Erro em toggle_favorito: {e}")
         return JsonResponse(
             {"status": "error", "message": "Ocorreu um erro interno."}, status=500
