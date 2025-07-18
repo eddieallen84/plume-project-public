@@ -40,15 +40,16 @@ def get_filmes_populares(page=1, sort_by="popularity.desc"):
     return buscar_filmes_tmdb("discover/movie", params=params)
 
 def get_filmes_lancamento(page=1, sort_by="popularity.desc"):
-    """Busca filmes em lançamento, permitindo ordenação."""
+    """Busca filmes lançados recentemente, permitindo ordenação."""
     today = datetime.now()
-    future_date_limit = today + timedelta(days=45) 
+    # MODIFICADO: Buscando filmes dos últimos 60 dias até hoje.
+    past_date_limit = today - timedelta(days=60) 
 
     params = {
         "page": page,
         "sort_by": sort_by,
-        "primary_release_date.gte": today.strftime("%Y-%m-%d"),
-        "primary_release_date.lte": future_date_limit.strftime("%Y-%m-%d"),
+        "primary_release_date.gte": past_date_limit.strftime("%Y-%m-%d"),
+        "primary_release_date.lte": today.strftime("%Y-%m-%d"),
         "vote_count.gte": 50
     }
     return buscar_filmes_tmdb("discover/movie", params=params)
@@ -79,15 +80,12 @@ def search_tmdb_filmes(query, page=1):
         "query": query,
         "page": page,
     }
-    # A API de busca não suporta filtro por 'vote_count', então filtramos manualmente.
     api_response = buscar_filmes_tmdb("search/movie", params=params)
 
     if api_response and "results" in api_response:
-        # Cria uma nova lista apenas com filmes que têm 50 ou mais votos.
         filmes_filtrados = [
             filme for filme in api_response["results"] if filme.get("vote_count", 0) >= 50
         ]
-        # Substitui a lista de resultados original pela nossa lista filtrada.
         api_response["results"] = filmes_filtrados
     
     return api_response
