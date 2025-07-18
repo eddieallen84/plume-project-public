@@ -485,8 +485,9 @@ a.filme-link-wrapper:active {
   align-items: center;
   z-index: 1040;
   overflow-y: auto;
-  padding-top: 80px;
-  padding-bottom: 40px;
+  
+  justify-content: center;
+
 }
 .main-navigation.menu-aberto ul {
   flex-direction: column;
@@ -496,7 +497,7 @@ a.filme-link-wrapper:active {
   margin: 0;
 }
 .main-navigation.menu-aberto ul li a {
-  font-size: 1.2em;
+  font-size: 1.5em;
   padding: 10px 20px;
 }
 
