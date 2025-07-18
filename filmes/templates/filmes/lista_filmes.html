@@ -35,7 +35,7 @@
                         {% endfor %}
                         {% if generos_menu_para_exibir|length > 5 %}
                              <li class="dropdown-container">
-                                <a href="#" class="mais-generos-link" onclick="return false;">Mais... <i class="fas fa-caret-down"></i></a>
+                                <a href="#" class="mais-generos-link" onclick="return false;">Mais  <i class="fas fa-caret-down"></i></a>
                                 <ul class="dropdown-menu-custom">
                                     {% for genero_item in generos_menu_para_exibir|slice:"5:" %}
                                     <li><a href="{% url 'filmes_por_genero' id_genero=genero_item.id %}" {% if genero_item.id == id_genero_ativo %}class="active"{% endif %}>{{ genero_item.name }}</a></li>
