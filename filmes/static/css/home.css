@@ -480,9 +480,12 @@ a.filme-link-wrapper:active {
   background-color: rgba(12, 36, 10, 0.98);
   backdrop-filter: blur(5px);
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   z-index: 1040;
+  overflow-y: auto;
+  padding-top: 80px;
+  padding-bottom: 40px;
 }
 .main-navigation.menu-aberto ul {
   flex-direction: column;
@@ -492,11 +495,8 @@ a.filme-link-wrapper:active {
   margin: 0;
 }
 .main-navigation.menu-aberto ul li a {
-  font-size: 1.5em;
+  font-size: 1.2em;
   padding: 10px 20px;
-}
-.main-navigation.menu-aberto .dropdown-container {
-  display: none;
 }
 
 @media (max-width: 1200px) {
@@ -743,31 +743,29 @@ a.filme-link-wrapper:active {
 @media (max-width: 992px) {
   /* Quando o menu mobile estiver aberto... */
 
-  .main-navigation.menu-aberto .dropdown-container {
-    display: contents !important;
+  /* Usamos seletores mais específicos para garantir que estas regras vençam */
+
+  .main-navigation.menu-aberto ul .dropdown-container {
+    display: contents;
   }
 
-  .main-navigation.menu-aberto .mais-generos-link {
-    /* Não precisamos mais do link "Mais...", pois todos os itens já estarão visíveis. */
+  .main-navigation.menu-aberto .dropdown-container .mais-generos-link {
     display: none;
   }
 
-  .main-navigation.menu-aberto .dropdown-menu-custom {
-    /* Fazemos a lista interna do dropdown se comportar como parte da navegação principal */
+  .main-navigation.menu-aberto ul .dropdown-menu-custom {
     display: block;
-    position: static; /* Remove o posicionamento absoluto */
-    background-color: transparent; /* Remove o fundo do dropdown */
-    box-shadow: none; /* Remove a sombra */
-    min-width: unset; /* Remove a largura mínima */
-
-    /* Para alinhar com os outros itens do menu mobile */
+    position: static;
+    background-color: transparent;
+    box-shadow: none;
+    min-width: unset;
     list-style-type: none;
     padding: 0;
     margin: 0;
     width: 100%;
   }
 
-  .main-navigation.menu-aberto .dropdown-menu-custom li {
+  .main-navigation.menu-aberto ul .dropdown-menu-custom li {
     width: 100%;
     text-align: center;
   }
