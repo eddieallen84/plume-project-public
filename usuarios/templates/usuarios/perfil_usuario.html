@@ -191,7 +191,7 @@
             "ajaxUploadAvatarUrl": "{% url 'usuarios:ajax_upload_avatar' %}",
             "ajaxRemoverAvatarUrl": "{% url 'usuarios:ajax_remover_avatar' %}",
             "ajaxDeleteListUrl": "{% url 'usuarios:ajax_delete_list' %}",
-            "ajaxRemoverFilmeDaListaUrl": "{% url 'usuarios:ajax_remover_filme_da_lista' %}" {# NOVA URL #}
+            "ajaxRemoverFilmeDaListaUrl": "{% url 'usuarios:ajax_remover_filme_da_lista' %}"
         }
     </script>
     <script>
@@ -217,20 +217,18 @@
         // --- LÓGICA DAS ABAS ---
         const tabLinks = document.querySelectorAll('.perfil-nav-tabs .nav-link');
         const tabPanes = document.querySelectorAll('.perfil-tab-content .tab-pane');
-
         tabLinks.forEach(link => {
             link.addEventListener('click', function(event) {
                 event.preventDefault();
-                
                 tabLinks.forEach(l => l.classList.remove('active'));
                 tabPanes.forEach(p => p.classList.remove('active'));
-                
                 this.classList.add('active');
                 document.getElementById(this.dataset.tab).classList.add('active');
             });
         });
 
-        // --- LÓGICA DO AVATAR E CROPPER.JS ---
+        // --- LÓGICA DO AVATAR (LÓGICA DE DESENVOLVIMENTO) ---
+        // NENHUMA ALTERAÇÃO FEITA AQUI, CONFORME SOLICITADO.
         const avatarUploadInput = document.getElementById('avatarUploadInput');
         const avatarDisplayImage = document.getElementById('avatarDisplay');
         const imageToCropElement = document.getElementById('imageToCropInModal');
@@ -239,18 +237,13 @@
         const cancelCropButton = document.getElementById('cancelCropButton');
         const removeAvatarButton = document.getElementById('removeAvatarButton');
         let cropperInstance = null;
-
         if(avatarUploadInput) {
             avatarUploadInput.addEventListener('change', function(event) {
                 if (event.target.files && event.target.files[0]) {
                     imageToCropElement.src = URL.createObjectURL(event.target.files[0]);
                     cropModalElement.style.display = 'flex';
                     if (cropperInstance) cropperInstance.destroy();
-                    // Garanta que viewMode: 1 esteja aqui
-                    cropperInstance = new Cropper(imageToCropElement, { 
-                        aspectRatio: 1, 
-                        viewMode: 1 // <-- Esta opção é crucial para que a caixa de corte se ajuste à imagem.
-                    });
+                    cropperInstance = new Cropper(imageToCropElement, { aspectRatio: 1, viewMode: 1 });
                 }
             });
         }
@@ -288,70 +281,55 @@
         }
         
         // --- FUNÇÃO GENÉRICA PARA ALTERNAR MODO DE EDIÇÃO ---
+        // CORREÇÃO: Alterado de 'editing-mode' para 'edit-mode'
         function toggleEditingMode(containerElement, editButton, doneButton) {
-            containerElement.classList.toggle('editing-mode'); 
-            editButton.style.display = containerElement.classList.contains('editing-mode') ? 'none' : 'inline-block';
-            doneButton.style.display = containerElement.classList.contains('editing-mode') ? 'inline-block' : 'none';
+            containerElement.classList.toggle('edit-mode'); 
+            const isInEditMode = containerElement.classList.contains('edit-mode');
+            editButton.style.display = isInEditMode ? 'none' : 'inline-block';
+            doneButton.style.display = isInEditMode ? 'inline-block' : 'none';
         }
 
         // --- LÓGICA DO MODO DE EDIÇÃO PARA FAVORITOS ---
         const botaoEditarFavoritos = document.getElementById('botaoEditarFavoritos');
         const botaoConcluirEdicaoFavoritos = document.getElementById('botaoConcluirEdicaoFavoritos');
         const listaFavoritosContainer = document.getElementById('lista-favoritos-container');
-
         if (botaoEditarFavoritos && botaoConcluirEdicaoFavoritos && listaFavoritosContainer) {
             botaoEditarFavoritos.addEventListener('click', function() {
                 toggleEditingMode(listaFavoritosContainer, botaoEditarFavoritos, botaoConcluirEdicaoFavoritos);
             });
-
             botaoConcluirEdicaoFavoritos.addEventListener('click', function() {
                 toggleEditingMode(listaFavoritosContainer, botaoEditarFavoritos, botaoConcluirEdicaoFavoritos);
             });
         }
 
-        // --- LÓGICA PARA REMOVER FILMES DE LISTAS E EXCLUIR LISTAS ---
+        // --- LÓGICA UNIFICADA PARA EVENTOS DE LISTA ---
         document.querySelector('.perfil-tab-content').addEventListener('click', function(event) {
             const botaoEditarListaPersonalizada = event.target.closest('.botao-editar-lista-personalizada');
             const botaoConcluirEdicaoPersonalizada = event.target.closest('.botao-concluir-edicao-personalizada');
             const botaoRemoverFilmeDaLista = event.target.closest('.botao-remover-filme-lista');
             const botaoExcluirLista = event.target.closest('.botao-excluir-lista');
 
-            // Lógica para editar lista personalizada
-            if (botaoEditarListaPersonalizada) {
+            // Lógica para editar/concluir edição de lista personalizada
+            if (botaoEditarListaPersonalizada || botaoConcluirEdicaoPersonalizada) {
                 event.preventDefault();
-                const listCard = botaoEditarListaPersonalizada.closest('.lista-personalizada-card');
+                const listCard = (botaoEditarListaPersonalizada || botaoConcluirEdicaoPersonalizada).closest('.lista-personalizada-card');
+                const editButton = listCard.querySelector('.botao-editar-lista-personalizada');
                 const doneButton = listCard.querySelector('.botao-concluir-edicao-personalizada');
                 const previewContainer = listCard.querySelector('.preview-poster-grid');
-                toggleEditingMode(previewContainer, botaoEditarListaPersonalizada, doneButton);
+                toggleEditingMode(previewContainer, editButton, doneButton);
             }
 
-            // Lógica para concluir edição de lista personalizada
-            if (botaoConcluirEdicaoPersonalizada) {
-                event.preventDefault();
-                const listCard = botaoConcluirEdicaoPersonalizada.closest('.lista-personalizada-card');
-                const editButton = listCard.querySelector('.botao-editar-lista-personalizada');
-                const previewContainer = listCard.querySelector('.preview-poster-grid');
-                toggleEditingMode(previewContainer, editButton, botaoConcluirEdicaoPersonalizada);
-            }
-
-            // Lógica para remover filme de QUALQUER lista (favoritos ou personalizada)
+            // Lógica para remover filme (geral)
             if (botaoRemoverFilmeDaLista) {
                 event.preventDefault();
                 const listId = botaoRemoverFilmeDaLista.dataset.listId;
                 const filmeIdTmdb = botaoRemoverFilmeDaLista.dataset.idTmdb;
                 
-                let url;
-                // '{{ favoritos_padrao.id }}' é o ID do objeto de lista do Django passado pelo contexto.
-                // É essencial que esse ID seja um valor distinto e conhecido para a lista de favoritos.
-                // Em um projeto real, talvez seja melhor usar um atributo 'data-is-favorite-list="true"'
-                // ou uma URL específica para remoção de favoritos se a lógica for muito diferente.
-                // Mas, para este caso, a comparação do ID da lista funciona se favoritos_padrao.id
-                // for sempre o mesmo para a lista de favoritos do usuário.
-                if (listId == '{{ favoritos_padrao.id }}') { 
-                    url = JS_URLS_PERFIL.toggleFavoritoUrl;
-                } else {
-                    url = JS_URLS_PERFIL.ajaxRemoverFilmeDaListaUrl; 
-                }
+                // DECIDE A URL CORRETA (FAVORITOS vs. PERSONALIZADA)
+                // Usando a comparação de ID, que é uma abordagem válida se o ID de favoritos for único.
+                const url = (listId == '{{ favoritos_padrao.id }}') 
+                            ? JS_URLS_PERFIL.toggleFavoritoUrl 
+                            : JS_URLS_PERFIL.ajaxRemoverFilmeDaListaUrl;
 
                 if (confirm("Tem certeza que deseja remover este filme da lista?")) {
                     fetch(url, {
@@ -361,9 +339,10 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.status === 'ok' || (data.status === 'success' && !data.is_favorito)) { // 'success' e '!is_favorito' para toggle_favorito
+                        // Resposta unificada para os dois endpoints
+                        if (data.status === 'ok' || (data.status === 'success' && !data.is_favorito)) {
                             botaoRemoverFilmeDaLista.closest('.filme-item-wrapper-perfil').remove();
-                            // Atualizar contador de filmes na lista se aplicável
+                            // Atualiza contador de filmes
                             const listCard = botaoRemoverFilmeDaLista.closest('.lista-personalizada-card');
                             if (listCard) {
                                 const counterSpan = listCard.querySelector('.lista-card-contador');
@@ -371,23 +350,10 @@
                                     const currentCount = parseInt(counterSpan.textContent.match(/\d+/)[0]);
                                     counterSpan.textContent = `${currentCount - 1} filme(s)`;
                                 }
-                            } else { // Caso seja a lista de favoritos (não tem .lista-personalizada-card)
-                                const favoritosHeader = document.querySelector('#tab-overview .secao-listas-header');
-                                if (favoritosHeader) {
-                                    const counterSpan = favoritosHeader.querySelector('.lista-card-contador'); // Se você tiver um contador para favoritos
-                                    if (counterSpan) {
-                                        const currentCount = parseInt(counterSpan.textContent.match(/\d+/)[0]);
-                                        counterSpan.textContent = `${currentCount - 1} filme(s)`;
-                                    }
-                                }
                             }
-
                         } else { alert(data.message || "Não foi possível remover o filme."); }
                     })
-                    .catch(error => {
-                        console.error('Erro ao remover filme:', error);
-                        alert("Ocorreu um erro ao tentar remover o filme.");
-                    });
+                    .catch(error => { console.error('Erro ao remover filme:', error); alert("Ocorreu um erro."); });
                 }
             }
 
@@ -396,7 +362,7 @@
                 event.preventDefault();
                 const listId = botaoExcluirLista.dataset.listId;
                 const listName = botaoExcluirLista.dataset.listName;
-                if (confirm(`Tem certeza que deseja excluir a lista "${listName}"? Esta ação é irreversível.`)) {
+                if (confirm(`Excluir a lista "${listName}"? Esta ação é irreversível.`)) {
                     fetch(JS_URLS_PERFIL.ajaxDeleteListUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
@@ -408,10 +374,7 @@
                             document.getElementById(`lista-personalizada-${listId}`).remove();
                         } else { alert(data.message || "Não foi possível excluir a lista."); }
                     })
-                    .catch(error => {
-                        console.error('Erro ao excluir lista:', error);
-                        alert("Ocorreu um erro ao tentar excluir a lista.");
-                    });
+                    .catch(error => { console.error('Erro ao excluir lista:', error); alert("Ocorreu um erro."); });
                 }
             }
         });

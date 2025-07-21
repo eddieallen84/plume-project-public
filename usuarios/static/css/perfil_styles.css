@@ -1,4 +1,4 @@
-/* CONTAINER PRINCIPAL */
+/* usuarios\static\css\perfil_styles.css */
 .perfil-pagina-container {
   background-color: rgba(30, 86, 49, 0.5);
   padding: 25px;
@@ -230,8 +230,8 @@
 /* --- REGRAS PARA EXIBIR O BOTÃO REMOVER EM MODO DE EDIÇÃO --- */
 
 /* 1. Para a lista de FAVORITOS (Aba Visão Geral) */
-/* CORREÇÃO APLICADA AQUI: Usando o ID #lista-favoritos-container para máxima especificidade */
-#lista-favoritos-container.editing-mode .botao-remover-filme-lista {
+/* CORREÇÃO: Alterado de .editing-mode para .edit-mode para corresponder ao JS */
+#lista-favoritos-container.edit-mode .botao-remover-filme-lista {
   display: flex !important;
   width: calc(100% - 20px);
   margin: 5px auto 10px auto;
@@ -241,14 +241,15 @@
 }
 
 /* 2. Para as LISTAS PERSONALIZADAS (Aba Minhas Listas) */
-.lista-poster-preview.editing-mode .preview-poster-item {
+/* CORREÇÃO: Alterado de .editing-mode para .edit-mode para corresponder ao JS */
+.lista-poster-preview.edit-mode .preview-poster-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   padding-bottom: 30px;
 }
-.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista {
+.lista-poster-preview.edit-mode .preview-poster-item .botao-remover-filme-lista {
   display: flex !important;
   position: absolute;
   bottom: 0px;
@@ -264,7 +265,7 @@
   overflow: hidden;
   z-index: 10;
 }
-.lista-poster-preview.editing-mode .preview-poster-item .botao-remover-filme-lista i {
+.lista-poster-preview.edit-mode .preview-poster-item .botao-remover-filme-lista i {
   text-indent: 0;
   font-size: 1.2em;
 }
