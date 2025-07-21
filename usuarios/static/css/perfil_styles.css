@@ -230,7 +230,6 @@
 
 /* 1. Para a lista de Favoritos (Visão Geral): Botão com texto e ícone */
 .filme-lista.perfil-filme-lista.editing-mode .botao-remover-filme-lista {
-  /* <-- CORRIGIDO AQUI */
   display: flex !important; /* Força a exibição */
   width: calc(100% - 20px);
   margin: 5px auto 10px auto;
@@ -241,7 +240,6 @@
 
 /* 2. Para os previews de listas personalizadas (Aba Minhas Listas): Botão APENAS com ícone, abaixo da imagem */
 .lista-poster-preview.editing-mode .preview-poster-item {
-  /* <-- CORRIGIDO AQUI */
   display: flex;
   flex-direction: column;
   align-items: center; /* Centraliza o conteúdo (imagem e botão) */
@@ -251,7 +249,6 @@
 .lista-poster-preview.editing-mode
   .preview-poster-item
   .botao-remover-filme-lista {
-  /* <-- CORRIGIDO AQUI */
   display: flex !important; /* Força a exibição */
   position: absolute; /* Posição absoluta para ficar "colado" abaixo */
   bottom: 0px; /* Alinha na parte inferior do item */
@@ -271,7 +268,6 @@
   .preview-poster-item
   .botao-remover-filme-lista
   i {
-  /* <-- CORRIGIDO AQUI */
   text-indent: 0; /* Mostra o ícone */
   font-size: 1.2em; /* Tamanho maior para o ícone */
 }
@@ -363,7 +359,7 @@
 /* REMODELADO: Grid para as imagens de preview das listas personalizadas */
 .lista-poster-preview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
   align-items: start;
 }
@@ -587,11 +583,8 @@
   color: #218838;
 }
 
-/* RESPONSIVIDADE */
+/* --- RESPONSIVIDADE --- */
 @media (max-width: 768px) {
-   
-  
-
   .perfil-info-principal {
     flex-direction: column;
     align-items: center;
@@ -639,20 +632,27 @@
     grid-template-columns: 1fr;
   }
 
+  /* --- CORREÇÃO APLICADA AQUI --- */
   .lista-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    /* Mantém o comportamento flex da versão desktop */
+    flex-direction: row; 
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px; /* Adiciona um espaço para segurança */
   }
 
   .lista-card-acoes {
-    width: 100%;
-    justify-content: space-between;
+    /* Garante que os botões não ocupem 100% da largura */
+    width: auto;
+    justify-content: flex-end; /* Alinha os botões à direita */
+    flex-shrink: 0; /* Impede que os botões encolham */
   }
+  /* --- FIM DA CORREÇÃO --- */
+
 
   /* Ajuste responsivo para a nova estrutura de grid das imagens preview */
   .lista-poster-preview {
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
   }
   .preview-poster-item {
@@ -719,7 +719,7 @@
   }
 
   .lista-poster-preview {
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 5px;
   }
 }
