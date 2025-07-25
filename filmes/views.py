@@ -8,7 +8,6 @@ from datetime import datetime
 
 from .utils import (
     get_filmes_populares,
-    # get_filmes_lancamento, <-- REMOVIDO
     get_filmes_por_genero,
     get_detalhes_filme,
     search_tmdb_filmes,
